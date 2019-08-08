@@ -9,22 +9,21 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var Lgl = __importStar(require("../lib/Lgl"));
-//lgl --environment=somefile.json command subcommand
-// --environment=somefile.json
+//lgl --world=somefile.json command subcommand
+// --world=somefile.json
 // command: string
 // subcommand: string
 // $ lgl query "are vehicles allowed in the park?"
 // it depends
 var argv = require('minimist')(process.argv);
 var arg_command = argv._[2];
-console.log("command: " + arg_command);
+console.error("command: " + arg_command);
 var arg_subcommand = argv._[3];
 if (arg_subcommand) {
-    console.log("subcommand: " + arg_subcommand);
+    console.error("subcommand: " + arg_subcommand);
     console.error(argv);
 }
 if (arg_command == "query") {
-    console.log("response: " +
-        Lgl.reasoner({ props: {} }, { query: { as_string: arg_subcommand } })
-            .as_string);
+    console.log(Lgl.reasoner({ as_string: "default world" }, { as_string: arg_subcommand })
+        .as_string);
 }
