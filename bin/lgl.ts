@@ -31,7 +31,7 @@ environment variables:
 `;
 
 var argv = require('minimist')(process.argv, {
-    boolean:["test","verbose"]});
+    boolean:["test","verbose","v","vv"]});
 
 const LGL_VERBOSE = process.env.LGL_VERBOSE || argv.verbose || argv.v || argv.vv
 function console_error (str: string) {
