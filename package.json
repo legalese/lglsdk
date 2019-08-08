@@ -21,9 +21,14 @@
    },
    "homepage": "https://github.com/legalese/lglsdk#readme",
    "dependencies": {
+      "@types/lodash": "^4.14.136",
       "@types/minimist": "^1.2.0",
       "@types/node": "^12.7.1",
+      "find-up": "^4.1.0",
+      "lodash": "^4.17.15",
       "minimist": "^1.2.0",
+      "request": "^2.88.0",
+      "request-promise": "^4.2.4",
       "typescript": "^3.5.3"
    }
 }
