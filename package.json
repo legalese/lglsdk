@@ -30,5 +30,8 @@
       "request": "^2.88.0",
       "request-promise": "^4.2.4",
       "typescript": "^3.5.3"
+   },
+   "devDependencies": {
+      "@types/request-promise": "^4.1.44"
    }
 }
