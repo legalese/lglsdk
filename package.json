@@ -1,0 +1,19 @@
+{
+  "name": "lglsdk",
+  "version": "0.9.0",
+  "description": "SDK for the Legalese API",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/legalese/lglsdk.git"
+  },
+  "author": "legalese",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/legalese/lglsdk/issues"
+  },
+  "homepage": "https://github.com/legalese/lglsdk#readme"
+}
