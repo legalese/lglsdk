@@ -3,9 +3,9 @@
 import * as Minimist from "minimist"
 import * as Lgl from "../lib/Lgl"
 
-//lgl --environment=somefile.json command subcommand
+//lgl --world=somefile.json command subcommand
 
-// --environment=somefile.json
+// --world=somefile.json
 // command: string
 // subcommand: string
 
@@ -14,17 +14,16 @@ import * as Lgl from "../lib/Lgl"
 
 var argv = require('minimist')(process.argv);
 var arg_command = argv._[2];
-console.log(`command: ${arg_command}`);
+console.error(`command: ${arg_command}`);
 
 var arg_subcommand = argv._[3];
 if (arg_subcommand) {
-  console.log(`subcommand: ${arg_subcommand}`);
+  console.error(`subcommand: ${arg_subcommand}`);
   console.error(argv);
 }
 
 if (arg_command == "query") {
-  console.log("response: " +
-              Lgl.reasoner({props:{}},
-                           { query: { as_string: arg_subcommand } })
+  console.log(Lgl.reasoner({as_string:"default world"},
+                           {as_string: arg_subcommand})
               .as_string);
 }

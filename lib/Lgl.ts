@@ -1,11 +1,13 @@
 
 
-export interface Env {
-    props: object
+export interface World {
+    as_string: string
+    version?: string;
 }
 
 export interface Query {
-    query: object
+    as_string: string
+    version?: string;
 }
 
 export interface Response {
@@ -13,7 +15,7 @@ export interface Response {
     version: string;
 }
 
-export function reasoner (myenv: Env,
+export function reasoner (myworld: World,
                           myquery: Query) : Response {
     return { as_string: "it depends",
              version: "0.0.1"
