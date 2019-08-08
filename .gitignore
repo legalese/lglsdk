@@ -3,6 +3,8 @@
 # ignore package-lock
 
 package-lock.json
+# because we are a typescript shop
+*~
 
 # the below is from template at https://raw.githubusercontent.com/github/gitignore/master/Node.gitignore
 # Logs
