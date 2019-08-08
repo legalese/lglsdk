@@ -30,14 +30,15 @@ var rp = require("request-promise");
 // subcommand: string
 // $ lgl query "are vehicles allowed in the park?"
 // it depends
-var cli_help = "usage: lgl --world=world.json command subcommand ...\ncommands:\n    query \"question string\"\n    help\n    init\n    config\n    demo\n    bizfile / corpsec\n    proforma\n\noptions:\n    --test                  all commands will run in test mode against the dev sandbox\n    --verbose               verbose logging\n    --world=some.json       load environment context from some.json file\n    --config=conf.json      load configuration from conf.json file (default: ./lglconfig.json)\n    --filepath='some-file'  specify filepath for proforma template schema call\n\nenvironment variables:\n    LGL_VERBOSE   set to truthy to get more verbosity\n";
+var cli_help = "usage: lgl --world=world.json command subcommand ...\ncommands:\n    query \"question string\"\n    help\n    init\n    config\n    demo\n    bizfile / corpsec\n    proforma\n\noptions:\n    --test                  all commands will run in test mode against the dev sandbox\n    --verbose               verbose logging\n    --world=some.json       load environment context from some.json file\n    --config=conf.json      load configuration from conf.json file (default: ./lglconfig.json)\n    --filepath='some-file'  specify filepath for proforma template call\n    --filename='some-file'  specify write output of proforma template call\n\nenvironment variables:\n    LGL_VERBOSE   set to truthy to get more verbosity\n";
 var argv = require('minimist')(process.argv, {
     boolean: ["test", "t",
         "verbose", "v", "vv"]
 });
 var LGL_VERBOSE = process.env.LGL_VERBOSE || argv.verbose || argv.v || argv.vv;
-var PROFORMA_FP = process.env.PROFORMA_FP || argv.filepath || argv.fp;
 var LGL_TEST = process.env.LGL_TEST || argv.test || argv.t;
+var PROFORMA_FP = process.env.PROFORMA_FP || argv.filepath || argv.fp;
+var PROFORMA_FILENAME = process.env.PROFORMA_OUTPUT || argv.filename;
 function console_error(str) {
     if (LGL_VERBOSE) {
         console.error(str);
@@ -186,7 +187,12 @@ function run_proforma() {
     }
     else if (arg_subcommand == "schema") {
         var body = __assign({}, profile, { "filepath": PROFORMA_FP });
-        http('schema', body);
+        if (PROFORMA_FILENAME) {
+            http('schema', body, PROFORMA_FILENAME, 'json', writeJson);
+        }
+        else {
+            http('schema', body);
+        }
     }
     else if (arg_subcommand == "validate") {
     }
@@ -236,7 +242,7 @@ function json_filename(candidate) {
         return null; // https://medium.com/@hinchman_amanda/null-pointer-references-the-billion-dollar-mistake-1e616534d485
     }
 }
-function http(path, body) {
+function http(path, body, filename, filetype, callback) {
     var options = {
         method: 'POST',
         uri: "https://api.legalese.com/api/corpsec/v1.0/" + path,
@@ -246,8 +252,15 @@ function http(path, body) {
     rp(options)
         .then(function (parsedBody) {
         console_error(JSON.stringify(parsedBody, null, 2));
+        if (callback) {
+            callback(parsedBody, filename, filetype);
+        }
     })
         .catch(function (err) {
         console_error(err);
     });
+}
+function writeJson(parsed, filename, filetype) {
+    console_error("writing file " + filename + "-" + Date.now() + "." + filetype);
+    fs.writeFileSync(filename + "-" + Date.now() + "." + filetype, JSON.stringify(parsed), 'utf-8');
 }

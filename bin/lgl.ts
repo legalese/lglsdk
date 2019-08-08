@@ -31,7 +31,8 @@ options:
     --verbose               verbose logging
     --world=some.json       load environment context from some.json file
     --config=conf.json      load configuration from conf.json file (default: ./lglconfig.json)
-    --filepath='some-file'  specify filepath for proforma template schema call
+    --filepath='some-file'  specify filepath for proforma template call
+    --filename='some-file'  specify write output of proforma template call
 
 environment variables:
     LGL_VERBOSE   set to truthy to get more verbosity
@@ -43,8 +44,11 @@ var argv = require('minimist')(process.argv, {
 });
 
 const LGL_VERBOSE = process.env.LGL_VERBOSE || argv.verbose || argv.v || argv.vv
-const PROFORMA_FP = process.env.PROFORMA_FP || argv.filepath || argv.fp
 const LGL_TEST = process.env.LGL_TEST || argv.test || argv.t
+
+const PROFORMA_FP = process.env.PROFORMA_FP || argv.filepath || argv.fp
+const PROFORMA_FILENAME = process.env.PROFORMA_OUTPUT || argv.filename
+
 function console_error(str: string) {
     if (LGL_VERBOSE) { console.error(str) }
 }
@@ -211,7 +215,11 @@ function run_proforma() {
             ...profile,
             "filepath": PROFORMA_FP
         }
-        http('schema', body)
+        if (PROFORMA_FILENAME) {
+            http('schema', body, PROFORMA_FILENAME, 'json', writeJson)
+        } else {
+            http('schema', body)
+        }
     }
     else if (arg_subcommand == "validate") {
     }
@@ -263,7 +271,15 @@ function json_filename(candidate: string): string | null {
     }
 }
 
-function http(path: string, body: object) {
+
+function http(path: string,
+    body: object,
+    filename?: string,
+    filetype?: string,
+    callback?: (parsedBody: object,
+        filename: string,
+        filetype: string) => void) {
+
     var options = {
         method: 'POST',
         uri: `https://api.legalese.com/api/corpsec/v1.0/${path}`,
@@ -272,10 +288,19 @@ function http(path: string, body: object) {
     }
 
     rp(options)
-        .then(function(parsedBody) {
+        .then(function(parsedBody: object) {
             console_error(JSON.stringify(parsedBody, null, 2))
+            if (callback) {
+                callback(parsedBody, filename, filetype)
+            }
         })
         .catch(function(err) {
             console_error(err)
         })
+}
+
+
+function writeJson(parsed: object, filename: string, filetype: string) {
+    console_error(`writing file ${filename}-${Date.now()}.${filetype}`)
+    fs.writeFileSync(`${filename}-${Date.now()}.${filetype}`, JSON.stringify(parsed), 'utf-8')
 }
