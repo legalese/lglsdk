@@ -15,5 +15,8 @@
   "bugs": {
     "url": "https://github.com/legalese/lglsdk/issues"
   },
-  "homepage": "https://github.com/legalese/lglsdk#readme"
+  "homepage": "https://github.com/legalese/lglsdk#readme",
+  "dependencies": {
+    "minimist": "^1.2.0"
+  }
 }
