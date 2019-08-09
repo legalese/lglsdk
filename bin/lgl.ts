@@ -16,7 +16,7 @@ const rp = require("request-promise")
 // $ lgl query "are vehicles allowed in the park?"
 // it depends
 
-const cli_help = `usage: lgl --world=world.json command subcommand ...
+const cli_help = `usage: lgl [help] command subcommand ...
 commands:
     query "question string"
     help
@@ -31,13 +31,50 @@ options:
     --verbose               verbose logging
     --world=some.json       load environment context from some.json file
     --config=conf.json      load configuration from conf.json file (default: ./lglconfig.json)
-    --filepath='some-file'  specify filepath for proforma template call
-    --filename='some-file'  specify write output of proforma template call
-    --filetype='.json'      specify filetype for proforma document generation
 
 environment variables:
     LGL_VERBOSE   set to truthy to get more verbosity
 `;
+
+const cli_help_commands = { proforma: `subcommands for lgl proforma:
+    schemalist       list all available templates, in "key: title" format
+    schemalist key   show detailed example for a specific template, in json
+    schema     key   show the JSON schema for the expected input
+    validate   key   STDIN should be JSON data; will validate against the server
+                     note that you can also do client-side validation, since the SDK
+                     contains all the schemas
+    generate         see: lgl help proforma generate
+`,
+                               corpsec: `subcommands for lgl corpsec:
+    search companyname
+    get    UEN
+`,
+                               demo: `subcommands for lgl demo:
+    demo all
+    demo corpsec
+    demo proforma
+`,
+                               config: `subcommands for lgl config:
+    foo=bar    save foo=bar to config
+    foo        show value of foo
+`,
+                          };
+
+const cli_help_subcommands = { proforma: { schemalist: `sub-subcommands for lgl proforma schemalist:
+    key         show detailed example for a specific template, in JSON`,
+                                           generate: `sub-subcommands for lgl proforma generate:
+    key   STDIN should be JSON data; will fill a template
+    generate   key --filetype="docx"    save as Word docx file
+    generate   key --filetype="pdf"     save as PDF file
+    generate   key --filetype="pdf" --filename="myfilename" save as myfilename.pdf
+
+options for proforma generate:
+    --filepath='some-file'  specify filepath for proforma template call
+    --filename='some-file'  specify write output of proforma template call
+    --filetype='.json'      specify filetype for proforma document generation
+`
+                                         },
+                             }
 
 var argv = require('minimist')(process.argv, {
     boolean: ["test", "t",
@@ -91,7 +128,15 @@ else { config = {} }
 const world: (World | null) = <World>load_world();
 
 if (arg_command == "help") {
-    console.log(cli_help);
+    if (arg_subcommand && cli_help_commands[arg_subcommand]
+        && // subsubcommand
+        argv._[4] && cli_help_subcommands[arg_subcommand][argv._[4]]) {
+        console.log(cli_help_subcommands[arg_subcommand][argv._[4]])
+    }
+    else if (arg_subcommand && cli_help_commands[arg_subcommand]) { console.log(cli_help_commands[arg_subcommand]) }
+    else {
+        console.log(cli_help + "\n\ntry: lgl help demo\n");
+    }
 }
 else if (arg_command == "init") {
     run_init()
@@ -104,18 +149,33 @@ else if (arg_command == "demo") {
     run_demo()
 }
 else if (arg_command == "bizfile" || arg_command == "corpsec") {
+    check_config();
     console.log(`interface with the government's Department of Information Retrieval`);
     run_corpsec()
 }
 else if (arg_command == "proforma") {
+    check_config();
     console.log(`fill templates into documents, and beyond`);
     run_proforma()
 }
 else if (arg_command == "query") {
+    check_config();
     run_query()
 }
 else {
     console.error(cli_help);
+}
+
+function check_config() {
+    if (! config_file) {
+        console.error("lgl: can't find config file; system has not been initialized. run lgl init");
+        process.exit(1);
+    }
+
+    if (! config.potato) {
+        console.error("lgl: can't load config file; system has not been initialized. run lgl init");
+        process.exit(2);
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////// init
@@ -212,6 +272,8 @@ function run_corpsec() {
 
 ///////////////////////////////////////////////////////////////////////////// proforma
 
+interface Schemalist {about:{filepath:string, title:string}} // this is a bit of a repeat; later, when we have full type definitions from schematemplates, shove it in from the actual Schemalist definition.
+
 async function run_proforma() {
     // snarf STDIN as JSON
     let profile = {
@@ -224,9 +286,18 @@ async function run_proforma() {
     if (arg_subcommand == "schemalist") {
         if (PROFORMA_FILENAME) {
             const schemalist = await http('schemalist', profile)
-            writeToFile(schemalist, PROFORMA_FILENAME, 'json')
+            writeToFile(<Schemalist[]>schemalist, PROFORMA_FILENAME, 'json')
         } else {
-            const schemalist = await http('schemalist', profile)
+            const schemalist = <Schemalist[]> await http('schemalist', profile)
+
+            if (argv._[4]) {
+                console.log(JSON.stringify(schemalist.filter(thing=>thing.about.filepath == argv._[4])[0],null,2)+"\n")
+            }
+            else {
+                for (var thing of schemalist) {
+                    console.log(thing.about.filepath + ": " + thing.about.title)
+                }
+            }
         }
     }
     else if (arg_subcommand == "schema") {
