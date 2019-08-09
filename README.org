@@ -1,0 +1,84 @@
+* SDK for the Corpsec and Proforma APIs
+
+** Audience and Intention
+
+This software development kit aims to make it easier to build LegalTech applications which deal with corporations.
+
+Applications may deal with
+- company secretarial work (directors' meetings, AGMs, EGMs, members' resolutions by written means, filings)
+- corporate finance work (share transfers, fundraising, share issues, share buybacks)
+- bulk document generation (creating hundreds or thousands of customized notices or letters of demand)
+
+This SDK provides
+- schemas for type-checking and data validation,
+- API client libraries for various web services, and
+- a command-line interface to the above
+
+** Download & Install
+
+#+BEGIN_SRC shell
+  npm i -g @legalese/lglsdk
+#+END_SRC
+
+Installs the ~lgl~ command-line executable.
+
+** CLI front-end
+
+#+BEGIN_SRC shell
+lgl demo
+#+END_SRC
+
+Runs a brief interactive tutorial demonstrating how to use the system.
+
+#+BEGIN_SRC shell
+lgl init
+#+END_SRC
+
+Registers an account with the Legalese back-end. Legalese uses Auth0 for authentication and Stripe for billing.
+
+Also creates an ~lglconfig.json~ file in which API keys are saved, and creates a ~.lgl~ sub-directory in the current directory to store cached data.
+
+#+BEGIN_SRC shell
+lgl corpsec
+#+END_SRC
+
+~search~ Resolves company name to unique entity identifier.
+
+~get~ Given a unique entity identifer, retrieves details from a government registrar. Reads and writes to a cache which expires daily.
+
+#+BEGIN_SRC shell
+lgl corpsec
+#+END_SRC
+
+~generate~ Given a set of JSON data, fill a template into a PDF or DocX file that is ready for signature.
+
+~schemalist~ List all available templates. Retrieve example for a given template.
+
+~schema~ Retrieve details about a given template and data validation schema.
+
+
+
+** API library
+
+*** Error handling
+
+*** Choice of Endpoints
+
+**** Region / Availability Zone
+
+**** "On-Premises" Containerization
+
+** Schema library
+
+*** Typescript
+
+*** JSON Schema
+
+*** Other Tools
+
+**** typescript-json-schema
+
+**** typedoc
+
+**** react-jsonschema-form
+

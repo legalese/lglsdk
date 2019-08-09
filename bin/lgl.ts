@@ -45,23 +45,24 @@ const cli_help_commands = { proforma: `subcommands for lgl proforma:
                      contains all the schemas
     generate         see: lgl help proforma generate
 `,
-                               corpsec: `subcommands for lgl corpsec:
+                            corpsec: `subcommands for lgl corpsec:
     search companyname
     get    UEN
 `,
-                               demo: `subcommands for lgl demo:
+                            demo: `subcommands for lgl demo:
     demo all
     demo corpsec
     demo proforma
 `,
-                               config: `subcommands for lgl config:
+                            config: `subcommands for lgl config:
     foo=bar    save foo=bar to config
     foo        show value of foo
 `,
                           };
 
 const cli_help_subcommands = { proforma: { schemalist: `sub-subcommands for lgl proforma schemalist:
-    key         show detailed example for a specific template, in JSON`,
+    key         show detailed example for a specific template, in JSON
+`,
                                            generate: `sub-subcommands for lgl proforma generate:
     key   STDIN should be JSON data; will fill a template
     generate   key --filetype="docx"    save as Word docx file
