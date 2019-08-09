@@ -212,7 +212,7 @@ function run_corpsec() {
 
 ///////////////////////////////////////////////////////////////////////////// proforma
 
-function run_proforma() {
+async function run_proforma() {
     // snarf STDIN as JSON
     let profile = {
         "profile": {
@@ -223,9 +223,12 @@ function run_proforma() {
 
     if (arg_subcommand == "schemalist") {
         if (PROFORMA_FILENAME) {
-            http('schemalist', profile, PROFORMA_FILENAME, 'json', writeToFile)
+            await http('schemalist', profile, PROFORMA_FILENAME, 'json', writeToFile)
         } else {
-            http('schemalist', profile)
+            const schemalist = await http('schemalist', profile)
+            for (var thing in schemalist) {
+                console.log(thing.about.filepath)
+            }
         }
     }
     else if (arg_subcommand == "schema") {
@@ -304,11 +307,11 @@ function http(path: string,
         json: true
     }
 
-    rp(options)
+    return rp(options)
         .then(function(parsedBody: object) {
             console_error(JSON.stringify(parsedBody, null, 2))
             if (callback) {
-                callback(parsedBody, filename||"", filetype||"")
+                callback(parsedBody, <string>filename, <string>filetype)
             }
         })
     .catch(function(err:string) {
