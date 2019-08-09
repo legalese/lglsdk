@@ -74,10 +74,21 @@ else {
     config_file = json_filename("lglconfig.json")
 }
 
-let config: object
-if (config_file != null) { config = load_json(<string>config_file); }
+interface Config {
+  user_email?: string;
+  user_id?: string;
+  live_api_key?: string;
+  test_api_key?: string;
+  potato?: string | number;
+}
+
+interface World {
+}
+
+let config: Config
+if (config_file != undefined) { config = <Config>load_json(<string>config_file); }
 else { config = {} }
-const world: (object | null) = load_world();
+const world: (World | null) = <World>load_world();
 
 if (arg_command == "help") {
     console.log(cli_help);
@@ -140,7 +151,7 @@ If you're sure you want to re-initialize, delete that file and run init again.`)
                 "orig_email": arg_subcommand,
                 "user_id": "5d4c03aa302f420cc73dcc05"
             }
-        ));
+          ,null,2) + "\n");
     } else {
         // https://auth0.com/docs/integrations/using-auth0-to-secure-a-cli
         // call the api.legalese.com/api/lgl-init endpoint to write an entry into our users database
@@ -151,7 +162,7 @@ If you're sure you want to re-initialize, delete that file and run init again.`)
                 "user_email": arg_subcommand,
                 "user_id": "pending"
             }
-        ));
+          ,null,2) + "\n");
     }
 }
 
@@ -166,14 +177,15 @@ function run_config() {
             let mymatch = arg_subcommand.match(/(\w+)=(.*)/);
             console_error(`will config set ${mymatch[1]} = ${mymatch[2]}`);
 
-            let newconfig = <object>_.cloneDeep(config) // TODO: lodash deepcopy
+            let newconfig = <object>_.cloneDeep(config)
             newconfig[<string>mymatch[1]] = mymatch[2]
 
             if (LGL_TEST) {
-                console.error("warning: writing to test config file, proceed at your own risk.");
+                console.error("warning: writing to test config file, proceed at your own risk. you can always lgl --test init");
                 // sleep(5000)
             }
-            fs.writeFileSync(<string>config_file, JSON.stringify(newconfig));
+            fs.writeFileSync(<string>config_file, JSON.stringify(newconfig,null,2)+"\n");
+            config = newconfig;
         }
         else {
             if (config[arg_subcommand]) {
@@ -184,7 +196,7 @@ function run_config() {
             }
         }
     } else {
-        console.error("lgl: config <foo=bar> | <foo>");
+      console.log(JSON.stringify(config,null,2));
     }
 }
 
@@ -250,20 +262,19 @@ function run_query() {
 
 ///////////////////////////////////////////////////////////////////////////// utilities
 
-function load_world(): object | null { if (argv.world) { return load_json(argv.world) } else { return null } }
+function load_world(): World | null { if (argv.world) { return <World>load_json(argv.world) } else { return null } }
 
 // TODO: add schema validation to the config file, but warn, don't error, upon validation failure?
-function load_json(filename: string): object {
+function load_json(filename: string): object | undefined {
     let config
     try {
         config = JSON.parse(fs.readFileSync(filename, 'utf-8'))
+      console_error(`loaded json from ${filename}`);
+      console_error(config)
     }
     catch (e) {
         console_error(`unable to load json file ${filename}: ${e}`);
-        process.exit(2)
     }
-    console_error(`loaded json from ${filename}`);
-    console_error(config)
     return config
 }
 
@@ -297,10 +308,10 @@ function http(path: string,
         .then(function(parsedBody: object) {
             console_error(JSON.stringify(parsedBody, null, 2))
             if (callback) {
-                callback(parsedBody, filename, filetype)
+                callback(parsedBody, filename||"", filetype||"")
             }
         })
-        .catch(function(err) {
+    .catch(function(err:string) {
             console_error(err)
         })
 }
