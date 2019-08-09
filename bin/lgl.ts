@@ -33,6 +33,7 @@ options:
     --config=conf.json      load configuration from conf.json file (default: ./lglconfig.json)
     --filepath='some-file'  specify filepath for proforma template call
     --filename='some-file'  specify write output of proforma template call
+    --filetype='.json'      specify filetype for proforma document generation
 
 environment variables:
     LGL_VERBOSE   set to truthy to get more verbosity
@@ -47,7 +48,8 @@ const LGL_VERBOSE = process.env.LGL_VERBOSE || argv.verbose || argv.v || argv.vv
 const LGL_TEST = process.env.LGL_TEST || argv.test || argv.t
 
 const PROFORMA_FP = process.env.PROFORMA_FP || argv.filepath || argv.fp
-const PROFORMA_FILENAME = process.env.PROFORMA_OUTPUT || argv.filename
+const PROFORMA_FILENAME = process.env.PROFORMA_FILENAME || argv.filename
+const PROFORMA_FILETYPE = process.env.PROFORMA_FILETYPE || argv.filetype
 
 function console_error(str: string) {
     if (LGL_VERBOSE) { console.error(str) }
@@ -208,7 +210,11 @@ function run_proforma() {
     }
 
     if (arg_subcommand == "schemalist") {
-        http('schemalist', profile)
+        if (PROFORMA_FILENAME) {
+            http('schemalist', profile, PROFORMA_FILENAME, 'json', writeToFile)
+        } else {
+            http('schemalist', profile)
+        }
     }
     else if (arg_subcommand == "schema") {
         let body = {
@@ -216,7 +222,7 @@ function run_proforma() {
             "filepath": PROFORMA_FP
         }
         if (PROFORMA_FILENAME) {
-            http('schema', body, PROFORMA_FILENAME, 'json', writeJson)
+            http('schema', body, PROFORMA_FILENAME, 'json', writeToFile)
         } else {
             http('schema', body)
         }
@@ -300,7 +306,16 @@ function http(path: string,
 }
 
 
-function writeJson(parsed: object, filename: string, filetype: string) {
+function writeToFile(parsed: object, filename: string, filetype: string) {
     console_error(`writing file ${filename}-${Date.now()}.${filetype}`)
-    fs.writeFileSync(`${filename}-${Date.now()}.${filetype}`, JSON.stringify(parsed), 'utf-8')
+    switch (filetype) {
+        case 'json':
+            fs.writeFileSync(`${filename}-${Date.now()}.${filetype}`, JSON.stringify(parsed), 'utf-8')
+        case 'pdf':
+            fs.writeFileSync(`${filename}-${Date.now()}.${filetype}`, parsed, 'utf-8')
+        case 'docx':
+            fs.writeFileSync(`${filename}-${Date.now()}.${filetype}`, parsed, 'utf-8')
+        default:
+            return
+    }
 }
