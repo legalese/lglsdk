@@ -75,11 +75,11 @@ else {
 }
 
 interface Config {
-  user_email?: string;
-  user_id?: string;
-  live_api_key?: string;
-  test_api_key?: string;
-  potato?: string | number;
+    user_email?: string;
+    user_id?: string;
+    live_api_key?: string;
+    test_api_key?: string;
+    potato?: string | number;
 }
 
 interface World {
@@ -151,7 +151,7 @@ If you're sure you want to re-initialize, delete that file and run init again.`)
                 "orig_email": arg_subcommand,
                 "user_id": "5d4c03aa302f420cc73dcc05"
             }
-          ,null,2) + "\n");
+            , null, 2) + "\n");
     } else {
         // https://auth0.com/docs/integrations/using-auth0-to-secure-a-cli
         // call the api.legalese.com/api/lgl-init endpoint to write an entry into our users database
@@ -162,7 +162,7 @@ If you're sure you want to re-initialize, delete that file and run init again.`)
                 "user_email": arg_subcommand,
                 "user_id": "pending"
             }
-          ,null,2) + "\n");
+            , null, 2) + "\n");
     }
 }
 
@@ -184,7 +184,7 @@ function run_config() {
                 console.error("warning: writing to test config file, proceed at your own risk. you can always lgl --test init");
                 // sleep(5000)
             }
-            fs.writeFileSync(<string>config_file, JSON.stringify(newconfig,null,2)+"\n");
+            fs.writeFileSync(<string>config_file, JSON.stringify(newconfig, null, 2) + "\n");
             config = newconfig;
         }
         else {
@@ -196,7 +196,7 @@ function run_config() {
             }
         }
     } else {
-      console.log(JSON.stringify(config,null,2));
+        console.log(JSON.stringify(config, null, 2));
     }
 }
 
@@ -223,12 +223,10 @@ async function run_proforma() {
 
     if (arg_subcommand == "schemalist") {
         if (PROFORMA_FILENAME) {
-            await http('schemalist', profile, PROFORMA_FILENAME, 'json', writeToFile)
+            const schemalist = await http('schemalist', profile)
+            writeToFile(schemalist, PROFORMA_FILENAME, 'json')
         } else {
             const schemalist = await http('schemalist', profile)
-            for (var thing in schemalist) {
-                console.log(thing.about.filepath)
-            }
         }
     }
     else if (arg_subcommand == "schema") {
@@ -272,8 +270,8 @@ function load_json(filename: string): object | undefined {
     let config
     try {
         config = JSON.parse(fs.readFileSync(filename, 'utf-8'))
-      console_error(`loaded json from ${filename}`);
-      console_error(config)
+        console_error(`loaded json from ${filename}`);
+        console_error(config)
     }
     catch (e) {
         console_error(`unable to load json file ${filename}: ${e}`);
@@ -307,20 +305,19 @@ function http(path: string,
         json: true
     }
 
-    return rp(options)
-        .then(function(parsedBody: object) {
-            console_error(JSON.stringify(parsedBody, null, 2))
-            if (callback) {
-                callback(parsedBody, <string>filename, <string>filetype)
-            }
-        })
-    .catch(function(err:string) {
-            console_error(err)
-        })
+    return new Promise((resolve, reject) => {
+        rp(options)
+            .then(function(parsedBody: object) {
+                resolve(parsedBody)
+            })
+            .catch(function(err: string) {
+                reject(err)
+            })
+    })
 }
 
 
-function writeToFile(parsed: object, filename: string, filetype: string) {
+function writeToFile(parsed: object, filename: string, filetype = 'pdf') {
     console_error(`writing file ${filename}-${Date.now()}.${filetype}`)
     switch (filetype) {
         case 'json':
