@@ -84,6 +84,10 @@ var argv = require('minimist')(process.argv, {
 
 const LGL_VERBOSE = process.env.LGL_VERBOSE || argv.verbose || argv.v || argv.vv
 const LGL_TEST = process.env.LGL_TEST || argv.test || argv.t
+const URI_BASE = (process.env.LGL_URI ? process.env.LGL_URI :
+                  LGL_TEST
+                  ? `https://api.legalese.com/api/test/corpsec/v1.0`
+                  : `https://api.legalese.com/api/corpsec/v1.0`)
 
 const PROFORMA_FP = process.env.PROFORMA_FP || argv.filepath || argv.fp
 const PROFORMA_FILENAME = process.env.PROFORMA_FILENAME || argv.filename
@@ -115,8 +119,8 @@ else {
 interface Config {
     user_email?: string;
     user_id?: string;
-    live_api_key?: string;
-    test_api_key?: string;
+    v01_live_api_key?: string;
+    v01_test_api_key?: string;
     potato?: string | number;
 }
 
@@ -173,18 +177,13 @@ function check_config() {
         process.exit(1);
     }
 
-    if (! config.potato) {
+    if (! config.user_id) {
         console.error("lgl: can't load config file; system has not been initialized. run lgl init");
         process.exit(2);
     }
 }
 
 ///////////////////////////////////////////////////////////////////////////// init
-
-interface APIResponse { user_id? : string;
-                        app_metadata?: { v01_api_keys: string[] }
-                        api_error? : object;
-                      }
 
 async function run_init() {
     // usage: lgl init user@email.address
@@ -194,8 +193,6 @@ async function run_init() {
     // after they've done that, our API backend should be able to query auth0 and find that the email address is verified
     // and the user_id corresponds to that email address.
 
-    let api_response : APIResponse = {} 
-    
     // if we already have a config file then refuse to init; ask them to delete.
     // after running init we save to the config file
     if (config_file && fs.existsSync(config_file)) {
@@ -209,19 +206,24 @@ If you're sure you want to re-initialize, delete that file and run init again.`)
         config_file = LGL_TEST ? "test-config.json" : "lglconfig.json"
         console_error(`config_file is not defined! will proceed with ${config_file} in current directory.`);
     }
+
+    let api_response
+    try { api_response = await rp({method:'POST', uri: URI_BASE + "/users/create", body:{email:arg_subcommand}, json:true}) }
+    catch(e) { console.error(`lgl: error while calling API /create`); console.error(e); process.exit(1); }
+    // TODO: add validation here! let's see if the response from the API was what we expected.
     
-    api_response = await http('create',{
-        "email": arg_subcommand
-    }) as APIResponse
-    console.log(`we now save the api key to config_file.`)
+    console_error(`we output the body response.`)
     console.log(JSON.stringify(api_response,null,2)+"\n");
 
-    if (api_response === null
-        ||
-        api_response!.api_error) {console.error("got error from API:");
-                                 console.error(JSON.stringify(api_response.api_error,null,2)+"\n");
-                                 process.exit(1)
-                                }
+    if (api_response === null) {
+        console.error("lgl: got null response from API");
+        process.exit(1)
+    }
+    if (api_response.api_error || api_response.response_defined == false) {
+        console.error("lgl: got error from API:");
+        console.error(JSON.stringify(api_response.api_error,null,2)+"\n");
+        process.exit(1)
+    }
 
     // if the user already exists according to auth0 but the user deleted their lglconfig.json
     // they will refuse to create a new account. Instead we will get a 409.
@@ -234,7 +236,9 @@ If you're sure you want to re-initialize, delete that file and run init again.`)
                 "potato": "3",
                 "user_email": "demo-20190808@example.com",
                 "orig_email": arg_subcommand,
-                "user_id": "5d4c03aa302f420cc73dcc05"
+                "user_id": "5d4c03aa302f420cc73dcc05",
+                "v01_test_api_key": "",
+                "v01_live_api_key": ""
             }
             , null, 2) + "\n");
     } else {
@@ -242,13 +246,12 @@ If you're sure you want to re-initialize, delete that file and run init again.`)
         // call the api.legalese.com/api/lgl-init endpoint to write an entry into our users database
         // run an authorization loop against auth0
         // lgl client creates a random password; creates an auth0 account using that username and passwrod
-        fs.writeFileSync(config_file, JSON.stringify(
-            {
-                "user_email": arg_subcommand,
-                "user_id": api_response.user_id.match(/\|(.*)/)[1], // this error doesn't stop compilation.
-                "v01_api_keys": api_response.app_metadata.v01_api_keys
-            }
-            , null, 2) + "\n");
+        fs.writeFileSync(config_file, JSON.stringify( {
+            "user_email": api_response.email,
+            "user_id": api_response.user_id.match(/\|(.*)/)[1], // this error doesn't stop compilation.
+            "v01_live_api_key": api_response.app_metadata.v01_live_api_keys[0],
+            "v01_test_api_key": api_response.app_metadata.v01_test_api_keys[0],
+        } , null, 2) + "\n");
     }
 }
 
@@ -302,40 +305,18 @@ interface Schemalist {about:{filepath:string, title:string}} // this is a bit of
 
 async function run_proforma() {
     // snarf STDIN as JSON
-    let profile = {
-        "profile": {
-            "email": config.user_email,
-            "identities": [{ "user_id": config.user_id }]
-        }
-    }
 
     if (arg_subcommand == "schemalist") {
-        if (PROFORMA_FILENAME) {
-            const schemalist = await http('schemalist', profile)
-            writeToFile(<Schemalist[]>schemalist, PROFORMA_FILENAME, 'json')
-        } else {
-            const schemalist = <Schemalist[]> await http('schemalist', profile)
-
-            if (argv._[4]) {
-                console.log(JSON.stringify(schemalist.filter(thing=>thing.about.filepath == argv._[4])[0],null,2)+"\n")
-            }
-            else {
-                for (var thing of schemalist) {
-                    console.log(thing.about.filepath + ": " + thing.about.title)
-                }
-            }
-        }
+        let api_response
+        try { api_response = await rp({method:'POST', uri: URI_BASE + "/schemalist2",
+                                       body:{user_email:config.user_email,
+                                             user_id:config.user_id,
+                                             v01_api_key: LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key
+                                            }, json:true}) }
+        catch(e) { console.error(`lgl: error while calling API /schemalist2`); console.error(e); process.exit(1); }
+        console.log(api_response)
     }
     else if (arg_subcommand == "schema") {
-        let body = {
-            ...profile,
-            "filepath": PROFORMA_FP
-        }
-        if (PROFORMA_FILENAME) {
-            http('schema', body, PROFORMA_FILENAME, 'json', writeToFile)
-        } else {
-            http('schema', body)
-        }
     }
     else if (arg_subcommand == "validate") {
     }
@@ -385,36 +366,6 @@ function json_filename(candidate: string): string | null {
         return null // https://medium.com/@hinchman_amanda/null-pointer-references-the-billion-dollar-mistake-1e616534d485
     }
 }
-
-
-function http(path: string,
-    body: object,
-    filename?: string,
-    filetype?: string,
-    callback?: (parsedBody: object,
-        filename: string,
-        filetype: string) => void) {
-
-    const uri = (process.env.LGL_URI ? process.env.LGL_URI : `https://api.legalese.com/api/corpsec/v1.0/`) + path
-    
-    var options = {
-        method: 'POST',
-        uri: uri,
-        body: body,
-        json: true
-    }
-
-    return new Promise((resolve, reject) => {
-        rp(options)
-            .then(function(parsedBody: object) {
-                resolve(parsedBody)
-            })
-            .catch(function(err: string) {
-                reject(err)
-            })
-    })
-}
-
 
 function writeToFile(parsed: object, filename: string, filetype = 'pdf') {
     console_error(`writing file ${filename}-${Date.now()}.${filetype}`)

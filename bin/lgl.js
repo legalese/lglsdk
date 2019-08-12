@@ -1,16 +1,5 @@
 #!/usr/bin/env node
 "use strict";
-var __assign = (this && this.__assign) || function () {
-    __assign = Object.assign || function(t) {
-        for (var s, i = 1, n = arguments.length; i < n; i++) {
-            s = arguments[i];
-            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
-                t[p] = s[p];
-        }
-        return t;
-    };
-    return __assign.apply(this, arguments);
-};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
@@ -81,6 +70,10 @@ var argv = require('minimist')(process.argv, {
 });
 var LGL_VERBOSE = process.env.LGL_VERBOSE || argv.verbose || argv.v || argv.vv;
 var LGL_TEST = process.env.LGL_TEST || argv.test || argv.t;
+var URI_BASE = (process.env.LGL_URI ? process.env.LGL_URI :
+    LGL_TEST
+        ? "https://api.legalese.com/api/test/corpsec/v1.0"
+        : "https://api.legalese.com/api/corpsec/v1.0");
 var PROFORMA_FP = process.env.PROFORMA_FP || argv.filepath || argv.fp;
 var PROFORMA_FILENAME = process.env.PROFORMA_FILENAME || argv.filename;
 var PROFORMA_FILETYPE = process.env.PROFORMA_FILETYPE || argv.filetype;
@@ -160,18 +153,24 @@ function check_config() {
         console.error("lgl: can't find config file; system has not been initialized. run lgl init");
         process.exit(1);
     }
-    if (!config.potato) {
+    if (!config.user_id) {
         console.error("lgl: can't load config file; system has not been initialized. run lgl init");
         process.exit(2);
     }
 }
+///////////////////////////////////////////////////////////////////////////// init
 function run_init() {
     return __awaiter(this, void 0, void 0, function () {
-        var api_response;
+        var api_response, e_1;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    api_response = {};
+                    // usage: lgl init user@email.address
+                    // the backend hands us one or more API keys
+                    // we save the API keys to lglconfig.json
+                    // give the end-user to an opportunity to verify their email address against auth0 by clicking the link
+                    // after they've done that, our API backend should be able to query auth0 and find that the email address is verified
+                    // and the user_id corresponds to that email address.
                     // if we already have a config file then refuse to init; ask them to delete.
                     // after running init we save to the config file
                     if (config_file && fs.existsSync(config_file)) {
@@ -185,17 +184,29 @@ function run_init() {
                         config_file = LGL_TEST ? "test-config.json" : "lglconfig.json";
                         console_error("config_file is not defined! will proceed with " + config_file + " in current directory.");
                     }
-                    return [4 /*yield*/, http('create', {
-                            "email": arg_subcommand
-                        })];
+                    _a.label = 1;
                 case 1:
-                    api_response = (_a.sent());
-                    console.log("we now save the api key to config_file.");
+                    _a.trys.push([1, 3, , 4]);
+                    return [4 /*yield*/, rp({ method: 'POST', uri: URI_BASE + "/users/create", body: { email: arg_subcommand }, json: true })];
+                case 2:
+                    api_response = _a.sent();
+                    return [3 /*break*/, 4];
+                case 3:
+                    e_1 = _a.sent();
+                    console.error("lgl: error while calling API /create");
+                    console.error(e_1);
+                    process.exit(1);
+                    return [3 /*break*/, 4];
+                case 4:
+                    // TODO: add validation here! let's see if the response from the API was what we expected.
+                    console_error("we output the body response.");
                     console.log(JSON.stringify(api_response, null, 2) + "\n");
-                    if (api_response === null
-                        ||
-                            api_response.api_error) {
-                        console.error("got error from API:");
+                    if (api_response === null) {
+                        console.error("lgl: got null response from API");
+                        process.exit(1);
+                    }
+                    if (api_response.api_error || api_response.response_defined == false) {
+                        console.error("lgl: got error from API:");
                         console.error(JSON.stringify(api_response.api_error, null, 2) + "\n");
                         process.exit(1);
                     }
@@ -208,7 +219,9 @@ function run_init() {
                             "potato": "3",
                             "user_email": "demo-20190808@example.com",
                             "orig_email": arg_subcommand,
-                            "user_id": "5d4c03aa302f420cc73dcc05"
+                            "user_id": "5d4c03aa302f420cc73dcc05",
+                            "v01_test_api_key": "",
+                            "v01_live_api_key": ""
                         }, null, 2) + "\n");
                     }
                     else {
@@ -217,9 +230,10 @@ function run_init() {
                         // run an authorization loop against auth0
                         // lgl client creates a random password; creates an auth0 account using that username and passwrod
                         fs.writeFileSync(config_file, JSON.stringify({
-                            "user_email": arg_subcommand,
+                            "user_email": api_response.email,
                             "user_id": api_response.user_id.match(/\|(.*)/)[1],
-                            "v01_api_keys": api_response.app_metadata.v01_api_keys
+                            "v01_live_api_key": api_response.app_metadata.v01_live_api_keys[0],
+                            "v01_test_api_key": api_response.app_metadata.v01_test_api_keys[0],
                         }, null, 2) + "\n");
                     }
                     return [2 /*return*/];
@@ -265,46 +279,34 @@ function run_corpsec() {
 }
 function run_proforma() {
     return __awaiter(this, void 0, void 0, function () {
-        var profile, schemalist, schemalist, _i, schemalist_1, thing, body;
+        var api_response, e_2;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    profile = {
-                        "profile": {
-                            "email": config.user_email,
-                            "identities": [{ "user_id": config.user_id }]
-                        }
-                    };
                     if (!(arg_subcommand == "schemalist")) return [3 /*break*/, 5];
-                    if (!PROFORMA_FILENAME) return [3 /*break*/, 2];
-                    return [4 /*yield*/, http('schemalist', profile)];
+                    api_response = void 0;
+                    _a.label = 1;
                 case 1:
-                    schemalist = _a.sent();
-                    writeToFile(schemalist, PROFORMA_FILENAME, 'json');
+                    _a.trys.push([1, 3, , 4]);
+                    return [4 /*yield*/, rp({ method: 'POST', uri: URI_BASE + "/schemalist2",
+                            body: { user_email: config.user_email,
+                                user_id: config.user_id,
+                                v01_api_key: LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key
+                            }, json: true })];
+                case 2:
+                    api_response = _a.sent();
                     return [3 /*break*/, 4];
-                case 2: return [4 /*yield*/, http('schemalist', profile)];
                 case 3:
-                    schemalist = _a.sent();
-                    if (argv._[4]) {
-                        console.log(JSON.stringify(schemalist.filter(function (thing) { return thing.about.filepath == argv._[4]; })[0], null, 2) + "\n");
-                    }
-                    else {
-                        for (_i = 0, schemalist_1 = schemalist; _i < schemalist_1.length; _i++) {
-                            thing = schemalist_1[_i];
-                            console.log(thing.about.filepath + ": " + thing.about.title);
-                        }
-                    }
-                    _a.label = 4;
-                case 4: return [3 /*break*/, 6];
+                    e_2 = _a.sent();
+                    console.error("lgl: error while calling API /schemalist2");
+                    console.error(e_2);
+                    process.exit(1);
+                    return [3 /*break*/, 4];
+                case 4:
+                    console.log(api_response);
+                    return [3 /*break*/, 6];
                 case 5:
                     if (arg_subcommand == "schema") {
-                        body = __assign({}, profile, { "filepath": PROFORMA_FP });
-                        if (PROFORMA_FILENAME) {
-                            http('schema', body, PROFORMA_FILENAME, 'json', writeToFile);
-                        }
-                        else {
-                            http('schema', body);
-                        }
                     }
                     else if (arg_subcommand == "validate") {
                     }
@@ -351,24 +353,6 @@ function json_filename(candidate) {
     else {
         return null; // https://medium.com/@hinchman_amanda/null-pointer-references-the-billion-dollar-mistake-1e616534d485
     }
-}
-function http(path, body, filename, filetype, callback) {
-    var uri = (process.env.LGL_URI ? process.env.LGL_URI : "https://api.legalese.com/api/corpsec/v1.0/") + path;
-    var options = {
-        method: 'POST',
-        uri: uri,
-        body: body,
-        json: true
-    };
-    return new Promise(function (resolve, reject) {
-        rp(options)
-            .then(function (parsedBody) {
-            resolve(parsedBody);
-        })
-            .catch(function (err) {
-            reject(err);
-        });
-    });
 }
 function writeToFile(parsed, filename, filetype) {
     if (filetype === void 0) { filetype = 'pdf'; }
