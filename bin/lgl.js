@@ -65,7 +65,16 @@ var rp = require("request-promise");
 // subcommand: string
 // $ lgl query "are vehicles allowed in the park?"
 // it depends
-var cli_help = "usage: lgl --world=world.json command subcommand ...\ncommands:\n    query \"question string\"\n    help\n    init\n    config\n    demo\n    bizfile / corpsec\n    proforma\n\noptions:\n    --test                  all commands will run in test mode against the dev sandbox\n    --verbose               verbose logging\n    --world=some.json       load environment context from some.json file\n    --config=conf.json      load configuration from conf.json file (default: ./lglconfig.json)\n    --filepath='some-file'  specify filepath for proforma template call\n    --filename='some-file'  specify write output of proforma template call\n    --filetype='.json'      specify filetype for proforma document generation\n\nenvironment variables:\n    LGL_VERBOSE   set to truthy to get more verbosity\n";
+var cli_help = "usage: lgl [help] command subcommand ...\ncommands:\n    query \"question string\"\n    help\n    init\n    config\n    demo\n    bizfile / corpsec\n    proforma\n\noptions:\n    --test                  all commands will run in test mode against the dev sandbox\n    --verbose               verbose logging\n    --world=some.json       load environment context from some.json file\n    --config=conf.json      load configuration from conf.json file (default: ./lglconfig.json)\n\nenvironment variables:\n    LGL_VERBOSE   set to truthy to get more verbosity\n";
+var cli_help_commands = { proforma: "subcommands for lgl proforma:\n    schemalist       list all available templates, in \"key: title\" format\n    schemalist key   show detailed example for a specific template, in json\n    schema     key   show the JSON schema for the expected input\n    validate   key   STDIN should be JSON data; will validate against the server\n                     note that you can also do client-side validation, since the SDK\n                     contains all the schemas\n    generate         see: lgl help proforma generate\n",
+    corpsec: "subcommands for lgl corpsec:\n    search companyname\n    get    UEN\n",
+    demo: "subcommands for lgl demo:\n    demo all\n    demo corpsec\n    demo proforma\n",
+    config: "subcommands for lgl config:\n    foo=bar    save foo=bar to config\n    foo        show value of foo\n",
+};
+var cli_help_subcommands = { proforma: { schemalist: "sub-subcommands for lgl proforma schemalist:\n    key         show detailed example for a specific template, in JSON\n",
+        generate: "sub-subcommands for lgl proforma generate:\n    key   STDIN should be JSON data; will fill a template\n    generate   key --filetype=\"docx\"    save as Word docx file\n    generate   key --filetype=\"pdf\"     save as PDF file\n    generate   key --filetype=\"pdf\" --filename=\"myfilename\" save as myfilename.pdf\n\noptions for proforma generate:\n    --filepath='some-file'  specify filepath for proforma template call\n    --filename='some-file'  specify write output of proforma template call\n    --filetype='.json'      specify filetype for proforma document generation\n"
+    },
+};
 var argv = require('minimist')(process.argv, {
     boolean: ["test", "t",
         "verbose", "v", "vv"]
@@ -107,7 +116,17 @@ else {
 }
 var world = load_world();
 if (arg_command == "help") {
-    console.log(cli_help);
+    if (arg_subcommand && cli_help_commands[arg_subcommand]
+        && // subsubcommand
+            argv._[4] && cli_help_subcommands[arg_subcommand][argv._[4]]) {
+        console.log(cli_help_subcommands[arg_subcommand][argv._[4]]);
+    }
+    else if (arg_subcommand && cli_help_commands[arg_subcommand]) {
+        console.log(cli_help_commands[arg_subcommand]);
+    }
+    else {
+        console.log(cli_help + "\n\ntry: lgl help demo\n");
+    }
 }
 else if (arg_command == "init") {
     run_init();
@@ -120,59 +139,93 @@ else if (arg_command == "demo") {
     run_demo();
 }
 else if (arg_command == "bizfile" || arg_command == "corpsec") {
+    check_config();
     console.log("interface with the government's Department of Information Retrieval");
     run_corpsec();
 }
 else if (arg_command == "proforma") {
+    check_config();
     console.log("fill templates into documents, and beyond");
     run_proforma();
 }
 else if (arg_command == "query") {
+    check_config();
     run_query();
 }
 else {
     console.error(cli_help);
 }
-///////////////////////////////////////////////////////////////////////////// init
-function run_init() {
-    // usage: lgl init user@email.address
-    // set them up with an API key that works against the Legalese backend
-    // save the API key to lglconfig.json
-    // save the automatically generated auth0 password to lglconfig.json
-    // give the end-user to an opportunity to verify their email address against auth0 by clicking the link
-    // after they've done that, our API backend should be able to query auth0 and find that the email address is verified
-    // and the user_id corresponds to that email address.
-    // if we already have a config file then refuse to init; ask them to delete.
-    // after running init we save to the config file
-    if (config_file && fs.existsSync(config_file)) {
-        console.error("lgl: init: config file " + config_file + " already exists; refusing to init.\nIf you're sure you want to re-initialize, delete that file and run init again.");
+function check_config() {
+    if (!config_file) {
+        console.error("lgl: can't find config file; system has not been initialized. run lgl init");
         process.exit(1);
     }
-    else if (config_file) {
-        console_error("config_file is defined: " + config_file);
+    if (!config.potato) {
+        console.error("lgl: can't load config file; system has not been initialized. run lgl init");
+        process.exit(2);
     }
-    else {
-        config_file = LGL_TEST ? "test-config.json" : "lglconfig.json";
-        console_error("config_file is not defined! will proceed with " + config_file + " in current directory.");
-    }
-    if (LGL_TEST) {
-        fs.writeFileSync(config_file, JSON.stringify({
-            "potato": "3",
-            "user_email": "demo-20190808@example.com",
-            "orig_email": arg_subcommand,
-            "user_id": "5d4c03aa302f420cc73dcc05"
-        }, null, 2) + "\n");
-    }
-    else {
-        // https://auth0.com/docs/integrations/using-auth0-to-secure-a-cli
-        // call the api.legalese.com/api/lgl-init endpoint to write an entry into our users database
-        // run an authorization loop against auth0
-        // lgl client creates a random password; creates an auth0 account using that username and passwrod
-        fs.writeFileSync(config_file, JSON.stringify({
-            "user_email": arg_subcommand,
-            "user_id": "pending"
-        }, null, 2) + "\n");
-    }
+}
+function run_init() {
+    return __awaiter(this, void 0, void 0, function () {
+        var api_response;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    api_response = {};
+                    // if we already have a config file then refuse to init; ask them to delete.
+                    // after running init we save to the config file
+                    if (config_file && fs.existsSync(config_file)) {
+                        console.error("lgl: init: config file " + config_file + " already exists; refusing to init.\nIf you're sure you want to re-initialize, delete that file and run init again.");
+                        process.exit(1);
+                    }
+                    else if (config_file) {
+                        console_error("config_file is defined: " + config_file);
+                    }
+                    else {
+                        config_file = LGL_TEST ? "test-config.json" : "lglconfig.json";
+                        console_error("config_file is not defined! will proceed with " + config_file + " in current directory.");
+                    }
+                    return [4 /*yield*/, http('create', {
+                            "email": arg_subcommand
+                        })];
+                case 1:
+                    api_response = (_a.sent());
+                    console.log("we now save the api key to config_file.");
+                    console.log(JSON.stringify(api_response, null, 2) + "\n");
+                    if (api_response === null
+                        ||
+                            api_response.api_error) {
+                        console.error("got error from API:");
+                        console.error(JSON.stringify(api_response.api_error, null, 2) + "\n");
+                        process.exit(1);
+                    }
+                    // if the user already exists according to auth0 but the user deleted their lglconfig.json
+                    // they will refuse to create a new account. Instead we will get a 409.
+                    // the /create api needs to hand us an intelligible error message
+                    // and we can pass that on the user and instruct them to run a different command -- rekey? lostkey?
+                    if (LGL_TEST) {
+                        fs.writeFileSync(config_file, JSON.stringify({
+                            "potato": "3",
+                            "user_email": "demo-20190808@example.com",
+                            "orig_email": arg_subcommand,
+                            "user_id": "5d4c03aa302f420cc73dcc05"
+                        }, null, 2) + "\n");
+                    }
+                    else {
+                        // https://auth0.com/docs/integrations/using-auth0-to-secure-a-cli
+                        // call the api.legalese.com/api/lgl-init endpoint to write an entry into our users database
+                        // run an authorization loop against auth0
+                        // lgl client creates a random password; creates an auth0 account using that username and passwrod
+                        fs.writeFileSync(config_file, JSON.stringify({
+                            "user_email": arg_subcommand,
+                            "user_id": api_response.user_id.match(/\|(.*)/)[1],
+                            "v01_api_keys": api_response.app_metadata.v01_api_keys
+                        }, null, 2) + "\n");
+                    }
+                    return [2 /*return*/];
+            }
+        });
+    });
 }
 ///////////////////////////////////////////////////////////////////////////// config
 function run_config() {
@@ -210,10 +263,9 @@ function run_demo() {
 ///////////////////////////////////////////////////////////////////////////// corpsec / bizfile
 function run_corpsec() {
 }
-///////////////////////////////////////////////////////////////////////////// proforma
 function run_proforma() {
     return __awaiter(this, void 0, void 0, function () {
-        var profile, schemalist, schemalist, body;
+        var profile, schemalist, schemalist, _i, schemalist_1, thing, body;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -233,6 +285,15 @@ function run_proforma() {
                 case 2: return [4 /*yield*/, http('schemalist', profile)];
                 case 3:
                     schemalist = _a.sent();
+                    if (argv._[4]) {
+                        console.log(JSON.stringify(schemalist.filter(function (thing) { return thing.about.filepath == argv._[4]; })[0], null, 2) + "\n");
+                    }
+                    else {
+                        for (_i = 0, schemalist_1 = schemalist; _i < schemalist_1.length; _i++) {
+                            thing = schemalist_1[_i];
+                            console.log(thing.about.filepath + ": " + thing.about.title);
+                        }
+                    }
                     _a.label = 4;
                 case 4: return [3 /*break*/, 6];
                 case 5:
@@ -292,9 +353,10 @@ function json_filename(candidate) {
     }
 }
 function http(path, body, filename, filetype, callback) {
+    var uri = (process.env.LGL_URI ? process.env.LGL_URI : "https://api.legalese.com/api/corpsec/v1.0/") + path;
     var options = {
         method: 'POST',
-        uri: "https://api.legalese.com/api/corpsec/v1.0/" + path,
+        uri: uri,
         body: body,
         json: true
     };

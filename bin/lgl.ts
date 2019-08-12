@@ -181,15 +181,21 @@ function check_config() {
 
 ///////////////////////////////////////////////////////////////////////////// init
 
-function run_init() {
+interface APIResponse { user_id? : string;
+                        app_metadata?: { v01_api_keys: string[] }
+                        api_error? : object;
+                      }
+
+async function run_init() {
     // usage: lgl init user@email.address
-    // set them up with an API key that works against the Legalese backend
-    // save the API key to lglconfig.json
-    // save the automatically generated auth0 password to lglconfig.json
+    // the backend hands us one or more API keys
+    // we save the API keys to lglconfig.json
     // give the end-user to an opportunity to verify their email address against auth0 by clicking the link
     // after they've done that, our API backend should be able to query auth0 and find that the email address is verified
     // and the user_id corresponds to that email address.
 
+    let api_response : APIResponse = {} 
+    
     // if we already have a config file then refuse to init; ask them to delete.
     // after running init we save to the config file
     if (config_file && fs.existsSync(config_file)) {
@@ -203,7 +209,25 @@ If you're sure you want to re-initialize, delete that file and run init again.`)
         config_file = LGL_TEST ? "test-config.json" : "lglconfig.json"
         console_error(`config_file is not defined! will proceed with ${config_file} in current directory.`);
     }
+    
+    api_response = await http('create',{
+        "email": arg_subcommand
+    }) as APIResponse
+    console.log(`we now save the api key to config_file.`)
+    console.log(JSON.stringify(api_response,null,2)+"\n");
 
+    if (api_response === null
+        ||
+        api_response!.api_error) {console.error("got error from API:");
+                                 console.error(JSON.stringify(api_response.api_error,null,2)+"\n");
+                                 process.exit(1)
+                                }
+
+    // if the user already exists according to auth0 but the user deleted their lglconfig.json
+    // they will refuse to create a new account. Instead we will get a 409.
+    // the /create api needs to hand us an intelligible error message
+    // and we can pass that on the user and instruct them to run a different command -- rekey? lostkey?
+    
     if (LGL_TEST) {
         fs.writeFileSync(config_file, JSON.stringify(
             {
@@ -221,7 +245,8 @@ If you're sure you want to re-initialize, delete that file and run init again.`)
         fs.writeFileSync(config_file, JSON.stringify(
             {
                 "user_email": arg_subcommand,
-                "user_id": "pending"
+                "user_id": api_response.user_id.match(/\|(.*)/)[1], // this error doesn't stop compilation.
+                "v01_api_keys": api_response.app_metadata.v01_api_keys
             }
             , null, 2) + "\n");
     }
@@ -370,9 +395,11 @@ function http(path: string,
         filename: string,
         filetype: string) => void) {
 
+    const uri = (process.env.LGL_URI ? process.env.LGL_URI : `https://api.legalese.com/api/corpsec/v1.0/`) + path
+    
     var options = {
         method: 'POST',
-        uri: `https://api.legalese.com/api/corpsec/v1.0/${path}`,
+        uri: uri,
         body: body,
         json: true
     }
