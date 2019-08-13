@@ -292,7 +292,7 @@ function run_proforma() {
                 case 1:
                     _a.trys.push([1, 3, , 4]);
                     return [4 /*yield*/, rp({
-                            method: 'POST', uri: URI_BASE + "/schemalist2",
+                            method: 'POST', uri: URI_BASE + "/schemalist",
                             body: {
                                 email: config.email,
                                 user_id: config.user_id,
@@ -304,7 +304,7 @@ function run_proforma() {
                     return [3 /*break*/, 4];
                 case 3:
                     e_2 = _a.sent();
-                    console.error("lgl: error while calling API /schemalist2");
+                    console.error("lgl: error while calling API /schemalist");
                     console.error(e_2);
                     process.exit(1);
                     return [3 /*break*/, 4];

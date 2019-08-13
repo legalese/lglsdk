@@ -313,7 +313,7 @@ async function run_proforma() {
         let api_response
         try {
             api_response = await rp({
-                method: 'POST', uri: URI_BASE + "/schemalist2",
+                method: 'POST', uri: URI_BASE + "/schemalist",
                 body: {
                     email: config.email,
                     user_id: config.user_id,
@@ -321,7 +321,7 @@ async function run_proforma() {
                 }, json: true
             })
         }
-        catch (e) { console.error(`lgl: error while calling API /schemalist2`); console.error(e); process.exit(1); }
+        catch (e) { console.error(`lgl: error while calling API /schemalist`); console.error(e); process.exit(1); }
         console.log(api_response)
     }
     else if (arg_subcommand == "schema") {
