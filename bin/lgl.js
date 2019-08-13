@@ -55,12 +55,15 @@ var rp = require("request-promise");
 // $ lgl query "are vehicles allowed in the park?"
 // it depends
 var cli_help = "usage: lgl [help] command subcommand ...\ncommands:\n    query \"question string\"\n    help\n    init\n    config\n    demo\n    bizfile / corpsec\n    proforma\n\noptions:\n    --test                  all commands will run in test mode against the dev sandbox\n    --verbose               verbose logging\n    --world=some.json       load environment context from some.json file\n    --config=conf.json      load configuration from conf.json file (default: ./lglconfig.json)\n\nenvironment variables:\n    LGL_VERBOSE   set to truthy to get more verbosity\n";
-var cli_help_commands = { proforma: "subcommands for lgl proforma:\n    schemalist       list all available templates, in \"key: title\" format\n    schemalist key   show detailed example for a specific template, in json\n    schema     key   show the JSON schema for the expected input\n    validate   key   STDIN should be JSON data; will validate against the server\n                     note that you can also do client-side validation, since the SDK\n                     contains all the schemas\n    generate         see: lgl help proforma generate\n",
+var cli_help_commands = {
+    proforma: "subcommands for lgl proforma:\n    schemalist       list all available templates, in \"key: title\" format\n    schemalist key   show detailed example for a specific template, in json\n    schema     key   show the JSON schema for the expected input\n    validate   key   STDIN should be JSON data; will validate against the server\n                     note that you can also do client-side validation, since the SDK\n                     contains all the schemas\n    generate         see: lgl help proforma generate\n",
     corpsec: "subcommands for lgl corpsec:\n    search companyname\n    get    UEN\n",
     demo: "subcommands for lgl demo:\n    demo all\n    demo corpsec\n    demo proforma\n",
     config: "subcommands for lgl config:\n    foo=bar    save foo=bar to config\n    foo        show value of foo\n",
 };
-var cli_help_subcommands = { proforma: { schemalist: "sub-subcommands for lgl proforma schemalist:\n    key         show detailed example for a specific template, in JSON\n",
+var cli_help_subcommands = {
+    proforma: {
+        schemalist: "sub-subcommands for lgl proforma schemalist:\n    key         show detailed example for a specific template, in JSON\n",
         generate: "sub-subcommands for lgl proforma generate:\n    key   STDIN should be JSON data; will fill a template\n    generate   key --filetype=\"docx\"    save as Word docx file\n    generate   key --filetype=\"pdf\"     save as PDF file\n    generate   key --filetype=\"pdf\" --filename=\"myfilename\" save as myfilename.pdf\n\noptions for proforma generate:\n    --filepath='some-file'  specify filepath for proforma template call\n    --filename='some-file'  specify write output of proforma template call\n    --filetype='.json'      specify filetype for proforma document generation\n"
     },
 };
@@ -288,11 +291,14 @@ function run_proforma() {
                     _a.label = 1;
                 case 1:
                     _a.trys.push([1, 3, , 4]);
-                    return [4 /*yield*/, rp({ method: 'POST', uri: URI_BASE + "/schemalist2",
-                            body: { user_email: config.user_email,
+                    return [4 /*yield*/, rp({
+                            method: 'POST', uri: URI_BASE + "/schemalist2",
+                            body: {
+                                user_email: config.user_email,
                                 user_id: config.user_id,
                                 v01_api_key: LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key
-                            }, json: true })];
+                            }, json: true
+                        })];
                 case 2:
                     api_response = _a.sent();
                     return [3 /*break*/, 4];

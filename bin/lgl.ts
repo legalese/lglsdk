@@ -36,7 +36,8 @@ environment variables:
     LGL_VERBOSE   set to truthy to get more verbosity
 `;
 
-const cli_help_commands = { proforma: `subcommands for lgl proforma:
+const cli_help_commands = {
+    proforma: `subcommands for lgl proforma:
     schemalist       list all available templates, in "key: title" format
     schemalist key   show detailed example for a specific template, in json
     schema     key   show the JSON schema for the expected input
@@ -45,25 +46,27 @@ const cli_help_commands = { proforma: `subcommands for lgl proforma:
                      contains all the schemas
     generate         see: lgl help proforma generate
 `,
-                            corpsec: `subcommands for lgl corpsec:
+    corpsec: `subcommands for lgl corpsec:
     search companyname
     get    UEN
 `,
-                            demo: `subcommands for lgl demo:
+    demo: `subcommands for lgl demo:
     demo all
     demo corpsec
     demo proforma
 `,
-                            config: `subcommands for lgl config:
+    config: `subcommands for lgl config:
     foo=bar    save foo=bar to config
     foo        show value of foo
 `,
-                          };
+};
 
-const cli_help_subcommands = { proforma: { schemalist: `sub-subcommands for lgl proforma schemalist:
+const cli_help_subcommands = {
+    proforma: {
+        schemalist: `sub-subcommands for lgl proforma schemalist:
     key         show detailed example for a specific template, in JSON
 `,
-                                           generate: `sub-subcommands for lgl proforma generate:
+        generate: `sub-subcommands for lgl proforma generate:
     key   STDIN should be JSON data; will fill a template
     generate   key --filetype="docx"    save as Word docx file
     generate   key --filetype="pdf"     save as PDF file
@@ -74,8 +77,8 @@ options for proforma generate:
     --filename='some-file'  specify write output of proforma template call
     --filetype='.json'      specify filetype for proforma document generation
 `
-                                         },
-                             }
+    },
+}
 
 var argv = require('minimist')(process.argv, {
     boolean: ["test", "t",
@@ -85,9 +88,9 @@ var argv = require('minimist')(process.argv, {
 const LGL_VERBOSE = process.env.LGL_VERBOSE || argv.verbose || argv.v || argv.vv
 const LGL_TEST = process.env.LGL_TEST || argv.test || argv.t
 const URI_BASE = (process.env.LGL_URI ? process.env.LGL_URI :
-                  LGL_TEST
-                  ? `https://api.legalese.com/api/test/corpsec/v1.0`
-                  : `https://api.legalese.com/api/corpsec/v1.0`)
+    LGL_TEST
+        ? `https://api.legalese.com/api/test/corpsec/v1.0`
+        : `https://api.legalese.com/api/corpsec/v1.0`)
 
 const PROFORMA_FP = process.env.PROFORMA_FP || argv.filepath || argv.fp
 const PROFORMA_FILENAME = process.env.PROFORMA_FILENAME || argv.filename
@@ -172,12 +175,12 @@ else {
 }
 
 function check_config() {
-    if (! config_file) {
+    if (!config_file) {
         console.error("lgl: can't find config file; system has not been initialized. run lgl init");
         process.exit(1);
     }
 
-    if (! config.user_id) {
+    if (!config.user_id) {
         console.error("lgl: can't load config file; system has not been initialized. run lgl init");
         process.exit(2);
     }
@@ -208,12 +211,12 @@ If you're sure you want to re-initialize, delete that file and run init again.`)
     }
 
     let api_response
-    try { api_response = await rp({method:'POST', uri: URI_BASE + "/users/create", body:{email:arg_subcommand}, json:true}) }
-    catch(e) { console.error(`lgl: error while calling API /create`); console.error(e); process.exit(1); }
+    try { api_response = await rp({ method: 'POST', uri: URI_BASE + "/users/create", body: { email: arg_subcommand }, json: true }) }
+    catch (e) { console.error(`lgl: error while calling API /create`); console.error(e); process.exit(1); }
     // TODO: add validation here! let's see if the response from the API was what we expected.
-    
+
     console_error(`we output the body response.`)
-    console.log(JSON.stringify(api_response,null,2)+"\n");
+    console.log(JSON.stringify(api_response, null, 2) + "\n");
 
     if (api_response === null) {
         console.error("lgl: got null response from API");
@@ -221,7 +224,7 @@ If you're sure you want to re-initialize, delete that file and run init again.`)
     }
     if (api_response.api_error || api_response.response_defined == false) {
         console.error("lgl: got error from API:");
-        console.error(JSON.stringify(api_response.api_error,null,2)+"\n");
+        console.error(JSON.stringify(api_response.api_error, null, 2) + "\n");
         process.exit(1)
     }
 
@@ -229,7 +232,7 @@ If you're sure you want to re-initialize, delete that file and run init again.`)
     // they will refuse to create a new account. Instead we will get a 409.
     // the /create api needs to hand us an intelligible error message
     // and we can pass that on the user and instruct them to run a different command -- rekey? lostkey?
-    
+
     if (LGL_TEST) {
         fs.writeFileSync(config_file, JSON.stringify(
             {
@@ -246,12 +249,12 @@ If you're sure you want to re-initialize, delete that file and run init again.`)
         // call the api.legalese.com/api/lgl-init endpoint to write an entry into our users database
         // run an authorization loop against auth0
         // lgl client creates a random password; creates an auth0 account using that username and passwrod
-        fs.writeFileSync(config_file, JSON.stringify( {
+        fs.writeFileSync(config_file, JSON.stringify({
             "user_email": api_response.email,
             "user_id": api_response.user_id.match(/\|(.*)/)[1], // this error doesn't stop compilation.
             "v01_live_api_key": api_response.app_metadata.v01_live_api_keys[0],
             "v01_test_api_key": api_response.app_metadata.v01_test_api_keys[0],
-        } , null, 2) + "\n");
+        }, null, 2) + "\n");
     }
 }
 
@@ -301,19 +304,24 @@ function run_corpsec() {
 
 ///////////////////////////////////////////////////////////////////////////// proforma
 
-interface Schemalist {about:{filepath:string, title:string}} // this is a bit of a repeat; later, when we have full type definitions from schematemplates, shove it in from the actual Schemalist definition.
+interface Schemalist { about: { filepath: string, title: string } } // this is a bit of a repeat; later, when we have full type definitions from schematemplates, shove it in from the actual Schemalist definition.
 
 async function run_proforma() {
     // snarf STDIN as JSON
 
     if (arg_subcommand == "schemalist") {
         let api_response
-        try { api_response = await rp({method:'POST', uri: URI_BASE + "/schemalist2",
-                                       body:{user_email:config.user_email,
-                                             user_id:config.user_id,
-                                             v01_api_key: LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key
-                                            }, json:true}) }
-        catch(e) { console.error(`lgl: error while calling API /schemalist2`); console.error(e); process.exit(1); }
+        try {
+            api_response = await rp({
+                method: 'POST', uri: URI_BASE + "/schemalist2",
+                body: {
+                    user_email: config.user_email,
+                    user_id: config.user_id,
+                    v01_api_key: LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key
+                }, json: true
+            })
+        }
+        catch (e) { console.error(`lgl: error while calling API /schemalist2`); console.error(e); process.exit(1); }
         console.log(api_response)
     }
     else if (arg_subcommand == "schema") {
