@@ -220,9 +220,9 @@ function run_init() {
                     if (LGL_TEST) {
                         fs.writeFileSync(config_file, JSON.stringify({
                             "potato": "3",
-                            "user_email": "demo-20190808@example.com",
+                            "email": "demo-20190808@example.com",
                             "orig_email": arg_subcommand,
-                            "user_id": "5d4c03aa302f420cc73dcc05",
+                            "user_id": "auth0|5d4c03aa302f420cc73dcc05",
                             "v01_test_api_key": "",
                             "v01_live_api_key": ""
                         }, null, 2) + "\n");
@@ -233,8 +233,8 @@ function run_init() {
                         // run an authorization loop against auth0
                         // lgl client creates a random password; creates an auth0 account using that username and passwrod
                         fs.writeFileSync(config_file, JSON.stringify({
-                            "user_email": api_response.email,
-                            "user_id": api_response.user_id.match(/\|(.*)/)[1],
+                            "email": api_response.email,
+                            "user_id": api_response.user_id,
                             "v01_live_api_key": api_response.app_metadata.v01_live_api_keys[0],
                             "v01_test_api_key": api_response.app_metadata.v01_test_api_keys[0],
                         }, null, 2) + "\n");
@@ -294,7 +294,7 @@ function run_proforma() {
                     return [4 /*yield*/, rp({
                             method: 'POST', uri: URI_BASE + "/schemalist2",
                             body: {
-                                user_email: config.user_email,
+                                email: config.email,
                                 user_id: config.user_id,
                                 v01_api_key: LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key
                             }, json: true

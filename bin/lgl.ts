@@ -120,7 +120,7 @@ else {
 }
 
 interface Config {
-    user_email?: string;
+    email?: string;
     user_id?: string;
     v01_live_api_key?: string;
     v01_test_api_key?: string;
@@ -237,9 +237,9 @@ If you're sure you want to re-initialize, delete that file and run init again.`)
         fs.writeFileSync(config_file, JSON.stringify(
             {
                 "potato": "3",
-                "user_email": "demo-20190808@example.com",
+                "email": "demo-20190808@example.com",
                 "orig_email": arg_subcommand,
-                "user_id": "5d4c03aa302f420cc73dcc05",
+                "user_id": "auth0|5d4c03aa302f420cc73dcc05",
                 "v01_test_api_key": "",
                 "v01_live_api_key": ""
             }
@@ -250,8 +250,8 @@ If you're sure you want to re-initialize, delete that file and run init again.`)
         // run an authorization loop against auth0
         // lgl client creates a random password; creates an auth0 account using that username and passwrod
         fs.writeFileSync(config_file, JSON.stringify({
-            "user_email": api_response.email,
-            "user_id": api_response.user_id.match(/\|(.*)/)[1], // this error doesn't stop compilation.
+            "email": api_response.email,
+            "user_id": api_response.user_id, // this error doesn't stop compilation.
             "v01_live_api_key": api_response.app_metadata.v01_live_api_keys[0],
             "v01_test_api_key": api_response.app_metadata.v01_test_api_keys[0],
         }, null, 2) + "\n");
@@ -315,7 +315,7 @@ async function run_proforma() {
             api_response = await rp({
                 method: 'POST', uri: URI_BASE + "/schemalist2",
                 body: {
-                    user_email: config.user_email,
+                    email: config.email,
                     user_id: config.user_id,
                     v01_api_key: LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key
                 }, json: true
