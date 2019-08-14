@@ -5,6 +5,7 @@ import * as fs from "fs"
 import * as _ from "lodash"
 import * as path from "path"
 import * as findUp from "find-up"
+import * as prompts from "prompts"
 const rp = require("request-promise")
 
 //lgl --world=somefile.json command subcommand
@@ -21,6 +22,7 @@ commands:
     query "question string"
     help
     init
+    login      recover lglconfig.json using password
     config
     demo
     bizfile / corpsec
@@ -55,6 +57,18 @@ const cli_help_commands = {
     demo corpsec
     demo proforma
 `,
+    init: `lgl init <email>
+    Sets up an account at the Legalese backend using <email>.
+    The backend returns credentials including API keys.
+    Saves credentials to lglconfig.json in the current directory
+    Prompts you for a password; if you ever lose your lglconfig.json,
+        you will need this password to regenerate it.
+`,
+  login: `lgl login <email>
+    If you've accidentally lost your lglconfig.json file,
+    you can repopulate it from the server by logging in with
+    the email and password you previously set up.
+`,
     config: `subcommands for lgl config:
     foo=bar    save foo=bar to config
     foo        show value of foo
@@ -82,8 +96,11 @@ options for proforma generate:
 
 var argv = require('minimist')(process.argv, {
     boolean: ["test", "t",
-        "verbose", "v", "vv"]
+              "verbose", "v", "vv",
+              "help","h"
+             ]
 });
+if (argv.help || argv.h) { argv._.splice(2,0,"help") }
 
 const LGL_VERBOSE = process.env.LGL_VERBOSE || argv.verbose || argv.v || argv.vv
 const LGL_TEST = process.env.LGL_TEST || argv.test || argv.t
@@ -189,7 +206,9 @@ function check_config() {
 ///////////////////////////////////////////////////////////////////////////// init
 
 async function run_init() {
-    // usage: lgl init user@email.address
+  // usage: lgl init user@email.address
+  // we prompt for a password which we send to the server
+  //
     // the backend hands us one or more API keys
     // we save the API keys to lglconfig.json
     // give the end-user to an opportunity to verify their email address against auth0 by clicking the link
@@ -197,10 +216,16 @@ async function run_init() {
     // and the user_id corresponds to that email address.
 
     // if we already have a config file then refuse to init; ask them to delete.
-    // after running init we save to the config file
+  // after running init we save to the config file
+  //
+  // do we also save the password they gave us, into the config file? no. if they forget the password, they have to run lgl forgot.
+
     if (config_file && fs.existsSync(config_file)) {
         console.error(`lgl: init: config file ${config_file} already exists; refusing to init.
-If you're sure you want to re-initialize, delete that file and run init again.`);
+    If you are sure you want to re-initialize,
+    and you are prepared to create a new account with a different email address,
+    delete ${config_file} and run init again with the new email address.
+    Or just go to a different directory, without a ${config_file} file, and lgl init.`);
         process.exit(1);
     } else if (config_file) {
         console_error(`config_file is defined: ${config_file}`);
@@ -210,13 +235,25 @@ If you're sure you want to re-initialize, delete that file and run init again.`)
         console_error(`config_file is not defined! will proceed with ${config_file} in current directory.`);
     }
 
+  
+  // prompt user for password
+  const prompt_pw = await prompts.prompt([{
+    type:'password',
+    name:'pw1',
+    message: "Enter new password: "},
+                                          {
+    type:'password',
+    name:'pw2',
+      message: "Confirm password: "}]);
+  if (prompt_pw.pw1 != prompt_pw.pw2) {
+    console.error("Passwords did not match. Try again.");
+    process.exit(1);
+  }
+  
     let api_response
-    try { api_response = await rp({ method: 'POST', uri: URI_BASE + "/users/create", body: { email: arg_subcommand }, json: true }) }
+  try { api_response = await rp({ method: 'POST', uri: URI_BASE + "/users/create", body: { email: arg_subcommand, password: prompt_pw.pw1 }, json: true }) }
     catch (e) { console.error(`lgl: error while calling API /create`); console.error(e); process.exit(1); }
     // TODO: add validation here! let's see if the response from the API was what we expected.
-
-    console_error(`we output the body response.`)
-    console.log(JSON.stringify(api_response, null, 2) + "\n");
 
     if (api_response === null) {
         console.error("lgl: got null response from API");
@@ -224,7 +261,7 @@ If you're sure you want to re-initialize, delete that file and run init again.`)
     }
     if (api_response.api_error || api_response.response_defined == false) {
         console.error("lgl: got error from API:");
-        console.error(JSON.stringify(api_response.api_error, null, 2) + "\n");
+        console.error(api_response.api_error + "\n");
         process.exit(1)
     }
 

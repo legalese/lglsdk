@@ -47,6 +47,7 @@ var Lgl = __importStar(require("../lib/Lgl"));
 var fs = __importStar(require("fs"));
 var _ = __importStar(require("lodash"));
 var findUp = __importStar(require("find-up"));
+var prompts = __importStar(require("prompts"));
 var rp = require("request-promise");
 //lgl --world=somefile.json command subcommand
 // --world=somefile.json
@@ -54,11 +55,13 @@ var rp = require("request-promise");
 // subcommand: string
 // $ lgl query "are vehicles allowed in the park?"
 // it depends
-var cli_help = "usage: lgl [help] command subcommand ...\ncommands:\n    query \"question string\"\n    help\n    init\n    config\n    demo\n    bizfile / corpsec\n    proforma\n\noptions:\n    --test                  all commands will run in test mode against the dev sandbox\n    --verbose               verbose logging\n    --world=some.json       load environment context from some.json file\n    --config=conf.json      load configuration from conf.json file (default: ./lglconfig.json)\n\nenvironment variables:\n    LGL_VERBOSE   set to truthy to get more verbosity\n";
+var cli_help = "usage: lgl [help] command subcommand ...\ncommands:\n    query \"question string\"\n    help\n    init\n    login      recover lglconfig.json using password\n    config\n    demo\n    bizfile / corpsec\n    proforma\n\noptions:\n    --test                  all commands will run in test mode against the dev sandbox\n    --verbose               verbose logging\n    --world=some.json       load environment context from some.json file\n    --config=conf.json      load configuration from conf.json file (default: ./lglconfig.json)\n\nenvironment variables:\n    LGL_VERBOSE   set to truthy to get more verbosity\n";
 var cli_help_commands = {
     proforma: "subcommands for lgl proforma:\n    schemalist       list all available templates, in \"key: title\" format\n    schemalist key   show detailed example for a specific template, in json\n    schema     key   show the JSON schema for the expected input\n    validate   key   STDIN should be JSON data; will validate against the server\n                     note that you can also do client-side validation, since the SDK\n                     contains all the schemas\n    generate         see: lgl help proforma generate\n",
     corpsec: "subcommands for lgl corpsec:\n    search companyname\n    get    UEN\n",
     demo: "subcommands for lgl demo:\n    demo all\n    demo corpsec\n    demo proforma\n",
+    init: "lgl init <email>\n    Sets up an account at the Legalese backend using <email>.\n    The backend returns credentials including API keys.\n    Saves credentials to lglconfig.json in the current directory\n    Prompts you for a password; if you ever lose your lglconfig.json,\n        you will need this password to regenerate it.\n",
+    login: "lgl login <email>\n    If you've accidentally lost your lglconfig.json file,\n    you can repopulate it from the server by logging in with\n    the email and password you previously set up.\n",
     config: "subcommands for lgl config:\n    foo=bar    save foo=bar to config\n    foo        show value of foo\n",
 };
 var cli_help_subcommands = {
@@ -69,8 +72,13 @@ var cli_help_subcommands = {
 };
 var argv = require('minimist')(process.argv, {
     boolean: ["test", "t",
-        "verbose", "v", "vv"]
+        "verbose", "v", "vv",
+        "help", "h"
+    ]
 });
+if (argv.help || argv.h) {
+    argv._.splice(2, 0, "help");
+}
 var LGL_VERBOSE = process.env.LGL_VERBOSE || argv.verbose || argv.v || argv.vv;
 var LGL_TEST = process.env.LGL_TEST || argv.test || argv.t;
 var URI_BASE = (process.env.LGL_URI ? process.env.LGL_URI :
@@ -164,11 +172,13 @@ function check_config() {
 ///////////////////////////////////////////////////////////////////////////// init
 function run_init() {
     return __awaiter(this, void 0, void 0, function () {
-        var api_response, e_1;
+        var prompt_pw, api_response, e_1;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
                     // usage: lgl init user@email.address
+                    // we prompt for a password which we send to the server
+                    //
                     // the backend hands us one or more API keys
                     // we save the API keys to lglconfig.json
                     // give the end-user to an opportunity to verify their email address against auth0 by clicking the link
@@ -176,8 +186,10 @@ function run_init() {
                     // and the user_id corresponds to that email address.
                     // if we already have a config file then refuse to init; ask them to delete.
                     // after running init we save to the config file
+                    //
+                    // do we also save the password they gave us, into the config file? no. if they forget the password, they have to run lgl forgot.
                     if (config_file && fs.existsSync(config_file)) {
-                        console.error("lgl: init: config file " + config_file + " already exists; refusing to init.\nIf you're sure you want to re-initialize, delete that file and run init again.");
+                        console.error("lgl: init: config file " + config_file + " already exists; refusing to init.\n    If you are sure you want to re-initialize,\n    and you are prepared to create a new account with a different email address,\n    delete " + config_file + " and run init again with the new email address.\n    Or just go to a different directory, without a " + config_file + " file, and lgl init.");
                         process.exit(1);
                     }
                     else if (config_file) {
@@ -187,30 +199,44 @@ function run_init() {
                         config_file = LGL_TEST ? "test-config.json" : "lglconfig.json";
                         console_error("config_file is not defined! will proceed with " + config_file + " in current directory.");
                     }
-                    _a.label = 1;
+                    return [4 /*yield*/, prompts.prompt([{
+                                type: 'password',
+                                name: 'pw1',
+                                message: "Enter new password: "
+                            },
+                            {
+                                type: 'password',
+                                name: 'pw2',
+                                message: "Confirm password: "
+                            }])];
                 case 1:
-                    _a.trys.push([1, 3, , 4]);
-                    return [4 /*yield*/, rp({ method: 'POST', uri: URI_BASE + "/users/create", body: { email: arg_subcommand }, json: true })];
+                    prompt_pw = _a.sent();
+                    if (prompt_pw.pw1 != prompt_pw.pw2) {
+                        console.error("Passwords did not match. Try again.");
+                        process.exit(1);
+                    }
+                    _a.label = 2;
                 case 2:
-                    api_response = _a.sent();
-                    return [3 /*break*/, 4];
+                    _a.trys.push([2, 4, , 5]);
+                    return [4 /*yield*/, rp({ method: 'POST', uri: URI_BASE + "/users/create", body: { email: arg_subcommand, password: prompt_pw.pw1 }, json: true })];
                 case 3:
+                    api_response = _a.sent();
+                    return [3 /*break*/, 5];
+                case 4:
                     e_1 = _a.sent();
                     console.error("lgl: error while calling API /create");
                     console.error(e_1);
                     process.exit(1);
-                    return [3 /*break*/, 4];
-                case 4:
+                    return [3 /*break*/, 5];
+                case 5:
                     // TODO: add validation here! let's see if the response from the API was what we expected.
-                    console_error("we output the body response.");
-                    console.log(JSON.stringify(api_response, null, 2) + "\n");
                     if (api_response === null) {
                         console.error("lgl: got null response from API");
                         process.exit(1);
                     }
                     if (api_response.api_error || api_response.response_defined == false) {
                         console.error("lgl: got error from API:");
-                        console.error(JSON.stringify(api_response.api_error, null, 2) + "\n");
+                        console.error(api_response.api_error + "\n");
                         process.exit(1);
                     }
                     // if the user already exists according to auth0 but the user deleted their lglconfig.json
