@@ -261,8 +261,8 @@ function run_init() {
                         fs.writeFileSync(config_file, JSON.stringify({
                             "email": api_response.email,
                             "user_id": api_response.user_id,
-                            "v01_live_api_key": api_response.app_metadata.v01_live_api_keys[0],
-                            "v01_test_api_key": api_response.app_metadata.v01_test_api_keys[0],
+                            "v01_live_api_key": _.keys(api_response.app_metadata.v01_live_api_keys)[0],
+                            "v01_test_api_key": _.keys(api_response.app_metadata.v01_test_api_keys)[0],
                         }, null, 2) + "\n");
                     }
                     return [2 /*return*/];
@@ -373,7 +373,8 @@ function run_proforma() {
                                 email: config.email,
                                 user_id: config.user_id,
                                 v01_api_key: LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key,
-                                filepath: arg_filepath
+                                filepath: arg_filepath,
+                                data: arg_json
                             }, json: true
                         })];
                 case 12:
