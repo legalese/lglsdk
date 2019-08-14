@@ -92,8 +92,8 @@ const URI_BASE = (process.env.LGL_URI ? process.env.LGL_URI :
         ? `https://api.legalese.com/api/test/corpsec/v1.0`
         : `https://api.legalese.com/api/corpsec/v1.0`)
 
-const PROFORMA_FP = process.env.PROFORMA_FP || argv.filepath || argv.fp
-const PROFORMA_FILENAME = process.env.PROFORMA_FILENAME || argv.filename
+const arg_filepath = process.env.PROFORMA_FP || argv.filepath || argv.fp
+const arg_json = process.env.PROFORMA_JSON || argv.json
 const PROFORMA_FILETYPE = process.env.PROFORMA_FILETYPE || argv.filetype
 
 function console_error(str: string) {
@@ -106,7 +106,6 @@ var arg_subcommand = argv._[3];
 if (arg_subcommand) {
     console_error(`subcommand: ${arg_subcommand}`);
 }
-var arg_filepath = argv._[4];
 
 console_error(argv);
 
@@ -310,10 +309,10 @@ interface Schemalist { about: { filepath: string, title: string } } // this is a
 async function run_proforma() {
     // snarf STDIN as JSON
 
+    let apiRequest
     if (arg_subcommand == "schemalist") {
-        let api_response
         try {
-            api_response = await rp({
+            apiRequest = await rp({
                 method: 'POST', uri: URI_BASE + "/schemalist",
                 body: {
                     email: config.email,
@@ -323,12 +322,11 @@ async function run_proforma() {
             })
         }
         catch (e) { console.error(`lgl: error while calling API /schemalist`); console.error(e); process.exit(1); }
-        console.log(api_response)
+        console.log(apiRequest)
     }
     else if (arg_subcommand == "schema") {
-	let api_response
         try {
-            api_response = await rp({
+            apiRequest = await rp({
                 method: 'POST', uri: URI_BASE + "/schema",
                 body: {
                     email: config.email,
@@ -339,10 +337,23 @@ async function run_proforma() {
             })
         }
         catch (e) { console.error(`lgl: error while calling API /schema`); console.error(e); process.exit(1); }
-        console.log(api_response)
-
+        console.log(apiRequest)
     }
     else if (arg_subcommand == "validate") {
+	try {
+	    apiRequest = await rp({
+                method: 'POST', uri: URI_BASE + "/validate",
+                body: {
+                    email: config.email,
+                    user_id: config.user_id,
+                    v01_api_key: LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key,
+		    filepath: arg_filepath
+                }, json: true
+            })
+        }
+        catch (e) { console.error(`lgl: error while calling API /validate`); console.error(e); process.exit(1); }
+        console.log(apiRequest)
+
     }
     else if (arg_subcommand == "generate") {
     }

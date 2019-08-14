@@ -77,8 +77,8 @@ var URI_BASE = (process.env.LGL_URI ? process.env.LGL_URI :
     LGL_TEST
         ? "https://api.legalese.com/api/test/corpsec/v1.0"
         : "https://api.legalese.com/api/corpsec/v1.0");
-var PROFORMA_FP = process.env.PROFORMA_FP || argv.filepath || argv.fp;
-var PROFORMA_FILENAME = process.env.PROFORMA_FILENAME || argv.filename;
+var arg_filepath = process.env.PROFORMA_FP || argv.filepath || argv.fp;
+var arg_json = process.env.PROFORMA_JSON || argv.json;
 var PROFORMA_FILETYPE = process.env.PROFORMA_FILETYPE || argv.filetype;
 function console_error(str) {
     if (LGL_VERBOSE) {
@@ -91,7 +91,6 @@ var arg_subcommand = argv._[3];
 if (arg_subcommand) {
     console_error("subcommand: " + arg_subcommand);
 }
-var arg_filepath = argv._[4];
 console_error(argv);
 var config_file;
 if (LGL_TEST) {
@@ -283,12 +282,11 @@ function run_corpsec() {
 }
 function run_proforma() {
     return __awaiter(this, void 0, void 0, function () {
-        var api_response, e_2, api_response, e_3;
+        var apiRequest, e_2, e_3, e_4;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
                     if (!(arg_subcommand == "schemalist")) return [3 /*break*/, 5];
-                    api_response = void 0;
                     _a.label = 1;
                 case 1:
                     _a.trys.push([1, 3, , 4]);
@@ -301,7 +299,7 @@ function run_proforma() {
                             }, json: true
                         })];
                 case 2:
-                    api_response = _a.sent();
+                    apiRequest = _a.sent();
                     return [3 /*break*/, 4];
                 case 3:
                     e_2 = _a.sent();
@@ -310,11 +308,10 @@ function run_proforma() {
                     process.exit(1);
                     return [3 /*break*/, 4];
                 case 4:
-                    console.log(api_response);
-                    return [3 /*break*/, 11];
+                    console.log(apiRequest);
+                    return [3 /*break*/, 16];
                 case 5:
                     if (!(arg_subcommand == "schema")) return [3 /*break*/, 10];
-                    api_response = void 0;
                     _a.label = 6;
                 case 6:
                     _a.trys.push([6, 8, , 9]);
@@ -328,7 +325,7 @@ function run_proforma() {
                             }, json: true
                         })];
                 case 7:
-                    api_response = _a.sent();
+                    apiRequest = _a.sent();
                     return [3 /*break*/, 9];
                 case 8:
                     e_3 = _a.sent();
@@ -337,15 +334,39 @@ function run_proforma() {
                     process.exit(1);
                     return [3 /*break*/, 9];
                 case 9:
-                    console.log(api_response);
-                    return [3 /*break*/, 11];
+                    console.log(apiRequest);
+                    return [3 /*break*/, 16];
                 case 10:
-                    if (arg_subcommand == "validate") {
-                    }
-                    else if (arg_subcommand == "generate") {
-                    }
+                    if (!(arg_subcommand == "validate")) return [3 /*break*/, 15];
                     _a.label = 11;
-                case 11: return [2 /*return*/];
+                case 11:
+                    _a.trys.push([11, 13, , 14]);
+                    return [4 /*yield*/, rp({
+                            method: 'POST', uri: URI_BASE + "/validate",
+                            body: {
+                                email: config.email,
+                                user_id: config.user_id,
+                                v01_api_key: LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key,
+                                filepath: arg_filepath
+                            }, json: true
+                        })];
+                case 12:
+                    apiRequest = _a.sent();
+                    return [3 /*break*/, 14];
+                case 13:
+                    e_4 = _a.sent();
+                    console.error("lgl: error while calling API /validate");
+                    console.error(e_4);
+                    process.exit(1);
+                    return [3 /*break*/, 14];
+                case 14:
+                    console.log(apiRequest);
+                    return [3 /*break*/, 16];
+                case 15:
+                    if (arg_subcommand == "generate") {
+                    }
+                    _a.label = 16;
+                case 16: return [2 /*return*/];
             }
         });
     });
