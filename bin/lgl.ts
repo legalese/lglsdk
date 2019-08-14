@@ -180,7 +180,7 @@ else if (arg_command == "bizfile" || arg_command == "corpsec") {
 }
 else if (arg_command == "proforma") {
     check_config();
-    console.log(`fill templates into documents, and beyond`);
+    // console.log(`fill templates into documents, and beyond`);
     run_proforma()
 }
 else if (arg_command == "query") {
@@ -394,6 +394,21 @@ async function run_proforma() {
 
     }
     else if (arg_subcommand == "generate") {
+	try {
+	    apiRequest = await rp({
+                method: 'POST', uri: URI_BASE + "/generate",
+                body: {
+                    email: config.email,
+                    user_id: config.user_id,
+                    v01_api_key: LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key,
+		    filepath: arg_filepath,
+		    data: arg_json
+                }, json: true
+            })
+        }
+        catch (e) { console.error(`lgl: error while calling API /generate`); console.error(e); process.exit(1); }
+        console.log(apiRequest)
+
     }
     // curl -s -H 'Content-Type: application/json' -d '{"profile":{"email":"e", "identities":[{"user_id": "ui"}]}}' https://legalese.com/api/corpsec/v0.9/schemalist
     // | json -c 'this.about.filepath=="hw3"'

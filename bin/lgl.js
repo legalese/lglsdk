@@ -149,7 +149,7 @@ else if (arg_command == "bizfile" || arg_command == "corpsec") {
 }
 else if (arg_command == "proforma") {
     check_config();
-    console.log("fill templates into documents, and beyond");
+    // console.log(`fill templates into documents, and beyond`);
     run_proforma();
 }
 else if (arg_command == "query") {
@@ -308,7 +308,7 @@ function run_corpsec() {
 }
 function run_proforma() {
     return __awaiter(this, void 0, void 0, function () {
-        var apiRequest, e_2, e_3, e_4;
+        var apiRequest, e_2, e_3, e_4, e_5;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -335,7 +335,7 @@ function run_proforma() {
                     return [3 /*break*/, 4];
                 case 4:
                     console.log(apiRequest);
-                    return [3 /*break*/, 16];
+                    return [3 /*break*/, 20];
                 case 5:
                     if (!(arg_subcommand == "schema")) return [3 /*break*/, 10];
                     _a.label = 6;
@@ -361,7 +361,7 @@ function run_proforma() {
                     return [3 /*break*/, 9];
                 case 9:
                     console.log(apiRequest);
-                    return [3 /*break*/, 16];
+                    return [3 /*break*/, 20];
                 case 10:
                     if (!(arg_subcommand == "validate")) return [3 /*break*/, 15];
                     _a.label = 11;
@@ -388,12 +388,35 @@ function run_proforma() {
                     return [3 /*break*/, 14];
                 case 14:
                     console.log(apiRequest);
-                    return [3 /*break*/, 16];
+                    return [3 /*break*/, 20];
                 case 15:
-                    if (arg_subcommand == "generate") {
-                    }
+                    if (!(arg_subcommand == "generate")) return [3 /*break*/, 20];
                     _a.label = 16;
-                case 16: return [2 /*return*/];
+                case 16:
+                    _a.trys.push([16, 18, , 19]);
+                    return [4 /*yield*/, rp({
+                            method: 'POST', uri: URI_BASE + "/generate",
+                            body: {
+                                email: config.email,
+                                user_id: config.user_id,
+                                v01_api_key: LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key,
+                                filepath: arg_filepath,
+                                data: arg_json
+                            }, json: true
+                        })];
+                case 17:
+                    apiRequest = _a.sent();
+                    return [3 /*break*/, 19];
+                case 18:
+                    e_5 = _a.sent();
+                    console.error("lgl: error while calling API /generate");
+                    console.error(e_5);
+                    process.exit(1);
+                    return [3 /*break*/, 19];
+                case 19:
+                    console.log(apiRequest);
+                    _a.label = 20;
+                case 20: return [2 /*return*/];
             }
         });
     });
