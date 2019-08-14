@@ -91,6 +91,7 @@ var arg_subcommand = argv._[3];
 if (arg_subcommand) {
     console_error("subcommand: " + arg_subcommand);
 }
+var arg_filepath = argv._[4];
 console_error(argv);
 var config_file;
 if (LGL_TEST) {
@@ -282,7 +283,7 @@ function run_corpsec() {
 }
 function run_proforma() {
     return __awaiter(this, void 0, void 0, function () {
-        var api_response, e_2;
+        var api_response, e_2, api_response, e_3;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -310,16 +311,41 @@ function run_proforma() {
                     return [3 /*break*/, 4];
                 case 4:
                     console.log(api_response);
-                    return [3 /*break*/, 6];
+                    return [3 /*break*/, 11];
                 case 5:
-                    if (arg_subcommand == "schema") {
-                    }
-                    else if (arg_subcommand == "validate") {
+                    if (!(arg_subcommand == "schema")) return [3 /*break*/, 10];
+                    api_response = void 0;
+                    _a.label = 6;
+                case 6:
+                    _a.trys.push([6, 8, , 9]);
+                    return [4 /*yield*/, rp({
+                            method: 'POST', uri: URI_BASE + "/schema",
+                            body: {
+                                email: config.email,
+                                user_id: config.user_id,
+                                v01_api_key: LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key,
+                                filepath: arg_filepath
+                            }, json: true
+                        })];
+                case 7:
+                    api_response = _a.sent();
+                    return [3 /*break*/, 9];
+                case 8:
+                    e_3 = _a.sent();
+                    console.error("lgl: error while calling API /schema");
+                    console.error(e_3);
+                    process.exit(1);
+                    return [3 /*break*/, 9];
+                case 9:
+                    console.log(api_response);
+                    return [3 /*break*/, 11];
+                case 10:
+                    if (arg_subcommand == "validate") {
                     }
                     else if (arg_subcommand == "generate") {
                     }
-                    _a.label = 6;
-                case 6: return [2 /*return*/];
+                    _a.label = 11;
+                case 11: return [2 /*return*/];
             }
         });
     });

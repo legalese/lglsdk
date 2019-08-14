@@ -106,6 +106,7 @@ var arg_subcommand = argv._[3];
 if (arg_subcommand) {
     console_error(`subcommand: ${arg_subcommand}`);
 }
+var arg_filepath = argv._[4];
 
 console_error(argv);
 
@@ -325,6 +326,21 @@ async function run_proforma() {
         console.log(api_response)
     }
     else if (arg_subcommand == "schema") {
+	let api_response
+        try {
+            api_response = await rp({
+                method: 'POST', uri: URI_BASE + "/schema",
+                body: {
+                    email: config.email,
+                    user_id: config.user_id,
+                    v01_api_key: LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key,
+		    filepath: arg_filepath
+                }, json: true
+            })
+        }
+        catch (e) { console.error(`lgl: error while calling API /schema`); console.error(e); process.exit(1); }
+        console.log(api_response)
+
     }
     else if (arg_subcommand == "validate") {
     }
