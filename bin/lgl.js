@@ -99,6 +99,10 @@ var arg_subcommand = argv._[3];
 if (arg_subcommand) {
     console_error("subcommand: " + arg_subcommand);
 }
+var arg_subsubcommand = argv._[4];
+if (arg_subsubcommand) {
+    console_error("subsubcommand: " + arg_subsubcommand);
+}
 console_error(argv);
 var config_file;
 if (LGL_TEST) {
@@ -265,6 +269,7 @@ function run_init() {
                             "v01_test_api_key": _.keys(api_response.app_metadata.v01_test_api_keys)[0],
                         }, null, 2) + "\n");
                     }
+                    console.log("now look for a verification email from auth0");
                     return [2 /*return*/];
             }
         });
@@ -326,6 +331,14 @@ function run_proforma() {
                         })];
                 case 2:
                     apiRequest = _a.sent();
+                    if (arg_subsubcommand) {
+                        // grep for this.about.filepath == subsubcommand
+                        apiRequest = _.filter(apiRequest, function (dis) { return dis.about.filepath == arg_subsubcommand; });
+                    }
+                    else {
+                        apiRequest = _.fromPairs(_.map(apiRequest, function (dis) { return [dis.about.filepath, dis.about.title]; }));
+                    }
+                    console.log(JSON.stringify(apiRequest, null, 2));
                     return [3 /*break*/, 4];
                 case 3:
                     e_2 = _a.sent();
@@ -333,9 +346,7 @@ function run_proforma() {
                     console.error(e_2);
                     process.exit(1);
                     return [3 /*break*/, 4];
-                case 4:
-                    console.log(apiRequest);
-                    return [3 /*break*/, 19];
+                case 4: return [3 /*break*/, 19];
                 case 5:
                     if (!(arg_subcommand == "schema")) return [3 /*break*/, 10];
                     _a.label = 6;
@@ -352,6 +363,7 @@ function run_proforma() {
                         })];
                 case 7:
                     apiRequest = _a.sent();
+                    console.log(JSON.stringify(apiRequest, null, 2));
                     return [3 /*break*/, 9];
                 case 8:
                     e_3 = _a.sent();
@@ -359,9 +371,7 @@ function run_proforma() {
                     console.error(e_3);
                     process.exit(1);
                     return [3 /*break*/, 9];
-                case 9:
-                    console.log(apiRequest);
-                    return [3 /*break*/, 19];
+                case 9: return [3 /*break*/, 19];
                 case 10:
                     if (!(arg_subcommand == "validate")) return [3 /*break*/, 15];
                     _a.label = 11;
@@ -379,6 +389,7 @@ function run_proforma() {
                         })];
                 case 12:
                     apiRequest = _a.sent();
+                    console.log(JSON.stringify(apiRequest, null, 2));
                     return [3 /*break*/, 14];
                 case 13:
                     e_4 = _a.sent();
@@ -386,9 +397,7 @@ function run_proforma() {
                     console.error(e_4);
                     process.exit(1);
                     return [3 /*break*/, 14];
-                case 14:
-                    console.log(apiRequest);
-                    return [3 /*break*/, 19];
+                case 14: return [3 /*break*/, 19];
                 case 15:
                     if (!(arg_subcommand == "generate")) return [3 /*break*/, 19];
                     _a.label = 16;

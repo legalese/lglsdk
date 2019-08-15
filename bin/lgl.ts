@@ -123,6 +123,10 @@ var arg_subcommand = argv._[3];
 if (arg_subcommand) {
     console_error(`subcommand: ${arg_subcommand}`);
 }
+var arg_subsubcommand = argv._[4];
+if (arg_subsubcommand) {
+    console_error(`subsubcommand: ${arg_subsubcommand}`);
+}
 
 console_error(argv);
 
@@ -358,9 +362,17 @@ async function run_proforma() {
                     v01_api_key: LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key
                 }, json: true
             })
+
+          if (arg_subsubcommand) {
+            // grep for this.about.filepath == subsubcommand
+            apiRequest = _.filter(apiRequest, dis=>dis.about.filepath == arg_subsubcommand)
+          } else {
+            apiRequest = _.fromPairs(_.map(apiRequest, dis=>return [dis.about.filepath, dis.about.title]) )
+          }
+          
+          console.log(JSON.stringify(apiRequest,null,2))
         }
         catch (e) { console.error(`lgl: error while calling API /schemalist`); console.error(e); process.exit(1); }
-        console.log(apiRequest)
     }
     else if (arg_subcommand == "schema") {
         try {
@@ -373,9 +385,9 @@ async function run_proforma() {
 		    filepath: arg_filepath
                 }, json: true
             })
+          console.log(JSON.stringify(apiRequest,null,2))
         }
         catch (e) { console.error(`lgl: error while calling API /schema`); console.error(e); process.exit(1); }
-        console.log(apiRequest)
     }
     else if (arg_subcommand == "validate") {
 	try {
@@ -389,10 +401,9 @@ async function run_proforma() {
 		    data: arg_json
                 }, json: true
             })
+          console.log(JSON.stringify(apiRequest,null,2))
         }
         catch (e) { console.error(`lgl: error while calling API /validate`); console.error(e); process.exit(1); }
-        console.log(apiRequest)
-
     }
     else if (arg_subcommand == "generate") {
 	try {
@@ -407,7 +418,6 @@ async function run_proforma() {
                 }, json: true
             })
 	    console.log(JSON.stringify(apiRequest, null, 2))
-
         }
         catch (e) { console.error(`lgl: error while calling API /generate`); console.error(e); process.exit(1); }
 
