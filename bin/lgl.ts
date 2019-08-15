@@ -43,13 +43,13 @@ const cli_help_commands = {
     schemalist       list all available templates, in "key: title" format
     schemalist key   show detailed example for a specific template, in json.
                      extract the "example" property for subsequent use:
-                   $ lgl schemalist hw3 | json example > example.json
+                   $ lgl proforma schemalist hw3 | json example > example.json
     schema     key   show the JSON schema for the expected input
-                   $ lgl schema hw3
+                   $ lgl proforma schema hw3
     validate   key   STDIN should be JSON data; will validate against the server.
-                   $ lgl -t validate hw3 < example.json
-    generate         see: lgl help proforma generate
-                   $ lgl -t generate hw3 < example.json
+                   $ lgl -t proforma validate hw3 < example.json
+    generate   key   see: lgl help proforma generate
+                   $ lgl -t proforma generate hw3 < example.json | json docPdf | base64 -D > example.pdf
 `,
     corpsec: `subcommands for lgl corpsec:
     search companyname
@@ -81,16 +81,26 @@ const cli_help_commands = {
 const cli_help_subcommands = {
     proforma: {
         schemalist: `sub-subcommands for lgl proforma schemalist:
-    key         show detailed example for a specific template, in JSON
+    schemalist key   show detailed example for a specific template, in json.
+                     extract the "example" property for subsequent use:
+                   $ lgl proforma schemalist hw3 | json example > example.json
+`,
+      schema: `    schema     key   show the JSON schema for the expected input
+                   $ lgl proforma schema hw3
+`,
+      validate: `      validate   key   STDIN should be JSON data; will validate against the server.
+                   $ lgl -t proforma validate hw3 < example.json
 `,
         generate: `sub-subcommands for lgl proforma generate:
     key   STDIN should be JSON data; will fill a template
-    generate   key --filetype="docx"    save as Word docx file
-    generate   key --filetype="pdf"     save as PDF file
+    generate   key --filetype="docx"    save as Word docx file  (property: docDocx)
+    generate   key --filetype="pdf"     save as PDF file        (property: docPdf)
     generate   key --filetype="pdf" --filename="myfilename" save as myfilename.pdf
 
-options for proforma generate:
-    --filetype='json'      specify filetype for proforma document generation
+File content is base64-encoded, under a filetype-specific property.
+To extract, run something like:
+
+  $ lgl -t proforma generate hw3 < example.json | json docPdf | base64 -D > example.pdf
 `
     },
 }
