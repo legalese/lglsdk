@@ -67,7 +67,7 @@ var cli_help_commands = {
 var cli_help_subcommands = {
     proforma: {
         schemalist: "sub-subcommands for lgl proforma schemalist:\n    key         show detailed example for a specific template, in JSON\n",
-        generate: "sub-subcommands for lgl proforma generate:\n    key   STDIN should be JSON data; will fill a template\n    generate   key --filetype=\"docx\"    save as Word docx file\n    generate   key --filetype=\"pdf\"     save as PDF file\n    generate   key --filetype=\"pdf\" --filename=\"myfilename\" save as myfilename.pdf\n\noptions for proforma generate:\n    --filepath='some-file'  specify filepath for proforma template call\n    --filename='some-file'  specify write output of proforma template call\n    --filetype='.json'      specify filetype for proforma document generation\n"
+        generate: "sub-subcommands for lgl proforma generate:\n    key   STDIN should be JSON data; will fill a template\n    generate   key --filetype=\"docx\"    save as Word docx file\n    generate   key --filetype=\"pdf\"     save as PDF file\n    generate   key --filetype=\"pdf\" --filename=\"myfilename\" save as myfilename.pdf\n\noptions for proforma generate:\n    --filetype='json'      specify filetype for proforma document generation\n"
     },
 };
 var argv = require('minimist')(process.argv, {
@@ -85,8 +85,6 @@ var URI_BASE = (process.env.LGL_URI ? process.env.LGL_URI :
     LGL_TEST
         ? "https://api.legalese.com/api/test/corpsec/v1.0"
         : "https://api.legalese.com/api/corpsec/v1.0");
-var arg_filepath = process.env.PROFORMA_FP || argv.filepath || argv.fp;
-var arg_json = process.env.PROFORMA_JSON || argv.json;
 var PROFORMA_FILETYPE = process.env.PROFORMA_FILETYPE || argv.filetype;
 function console_error(str) {
     if (LGL_VERBOSE) {
@@ -105,16 +103,7 @@ if (arg_subsubcommand) {
 }
 console_error(argv);
 var config_file;
-if (LGL_TEST) {
-    console_error("lgl: running in test mode; will use test-config.json");
-    config_file = json_filename("test-config.json");
-    if (argv.config) {
-        console_error("ignoring user-provided config file name " + argv.config + " in favour of test-config.json");
-    }
-}
-else {
-    config_file = json_filename("lglconfig.json");
-}
+config_file = json_filename("lglconfig.json");
 var config;
 if (config_file != undefined) {
     config = load_json(config_file);
@@ -200,7 +189,7 @@ function run_init() {
                         console_error("config_file is defined: " + config_file);
                     }
                     else {
-                        config_file = LGL_TEST ? "test-config.json" : "lglconfig.json";
+                        config_file = "lglconfig.json";
                         console_error("config_file is not defined! will proceed with " + config_file + " in current directory.");
                     }
                     return [4 /*yield*/, prompts.prompt([{
@@ -333,7 +322,7 @@ function run_proforma() {
                     apiRequest = _a.sent();
                     if (arg_subsubcommand) {
                         // grep for this.about.filepath == subsubcommand
-                        apiRequest = _.filter(apiRequest, function (dis) { return dis.about.filepath == arg_subsubcommand; });
+                        apiRequest = _.filter(apiRequest, function (dis) { return dis.about.filepath == arg_subsubcommand; })[0];
                     }
                     else {
                         apiRequest = _.fromPairs(_.map(apiRequest, function (dis) { return [dis.about.filepath, dis.about.title]; }));
@@ -358,7 +347,7 @@ function run_proforma() {
                                 email: config.email,
                                 user_id: config.user_id,
                                 v01_api_key: LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key,
-                                filepath: arg_filepath
+                                filepath: arg_subsubcommand
                             }, json: true
                         })];
                 case 7:
@@ -383,8 +372,8 @@ function run_proforma() {
                                 email: config.email,
                                 user_id: config.user_id,
                                 v01_api_key: LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key,
-                                filepath: arg_filepath,
-                                data: arg_json
+                                filepath: arg_subsubcommand,
+                                data: JSON.parse(fs.readFileSync(0, 'utf-8'))
                             }, json: true
                         })];
                 case 12:
@@ -409,8 +398,8 @@ function run_proforma() {
                                 email: config.email,
                                 user_id: config.user_id,
                                 v01_api_key: LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key,
-                                filepath: arg_filepath,
-                                data: arg_json
+                                filepath: arg_subsubcommand,
+                                data: JSON.parse(fs.readFileSync(0, 'utf-8'))
                             }, json: true
                         })];
                 case 17:

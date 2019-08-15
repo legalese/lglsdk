@@ -87,9 +87,7 @@ const cli_help_subcommands = {
     generate   key --filetype="pdf" --filename="myfilename" save as myfilename.pdf
 
 options for proforma generate:
-    --filepath='some-file'  specify filepath for proforma template call
-    --filename='some-file'  specify write output of proforma template call
-    --filetype='.json'      specify filetype for proforma document generation
+    --filetype='json'      specify filetype for proforma document generation
 `
     },
 }
@@ -109,8 +107,6 @@ const URI_BASE = (process.env.LGL_URI ? process.env.LGL_URI :
         ? `https://api.legalese.com/api/test/corpsec/v1.0`
         : `https://api.legalese.com/api/corpsec/v1.0`)
 
-const arg_filepath = process.env.PROFORMA_FP || argv.filepath || argv.fp
-const arg_json = process.env.PROFORMA_JSON || argv.json
 const PROFORMA_FILETYPE = process.env.PROFORMA_FILETYPE || argv.filetype
 
 function console_error(str: string) {
@@ -131,14 +127,7 @@ if (arg_subsubcommand) {
 console_error(argv);
 
 let config_file: string | null
-if (LGL_TEST) {
-    console_error("lgl: running in test mode; will use test-config.json");
-    config_file = json_filename("test-config.json")
-    if (argv.config) { console_error(`ignoring user-provided config file name ${argv.config} in favour of test-config.json`) }
-}
-else {
-    config_file = json_filename("lglconfig.json")
-}
+config_file = json_filename("lglconfig.json")
 
 interface Config {
     email?: string;
@@ -235,7 +224,7 @@ async function run_init() {
         console_error(`config_file is defined: ${config_file}`);
     }
     else {
-        config_file = LGL_TEST ? "test-config.json" : "lglconfig.json"
+        config_file = "lglconfig.json"
         console_error(`config_file is not defined! will proceed with ${config_file} in current directory.`);
     }
 
@@ -365,9 +354,9 @@ async function run_proforma() {
 
           if (arg_subsubcommand) {
             // grep for this.about.filepath == subsubcommand
-            apiRequest = _.filter(apiRequest, dis=>dis.about.filepath == arg_subsubcommand)
+            apiRequest = _.filter(apiRequest, dis=>dis.about.filepath == arg_subsubcommand)[0]
           } else {
-            apiRequest = _.fromPairs(_.map(apiRequest, dis=>return [dis.about.filepath, dis.about.title]) )
+            apiRequest = _.fromPairs(_.map(apiRequest, dis=>{return [dis.about.filepath, dis.about.title]} ))
           }
           
           console.log(JSON.stringify(apiRequest,null,2))
@@ -382,7 +371,7 @@ async function run_proforma() {
                     email: config.email,
                     user_id: config.user_id,
                     v01_api_key: LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key,
-		    filepath: arg_filepath
+		    filepath: arg_subsubcommand
                 }, json: true
             })
           console.log(JSON.stringify(apiRequest,null,2))
@@ -391,14 +380,14 @@ async function run_proforma() {
     }
     else if (arg_subcommand == "validate") {
 	try {
-	    apiRequest = await rp({
+	  apiRequest = await rp({
                 method: 'POST', uri: URI_BASE + "/validate",
                 body: {
                     email: config.email,
                     user_id: config.user_id,
                     v01_api_key: LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key,
-		    filepath: arg_filepath,
-		    data: arg_json
+		    filepath: arg_subsubcommand,
+		  data: JSON.parse(fs.readFileSync(0,'utf-8'))
                 }, json: true
             })
           console.log(JSON.stringify(apiRequest,null,2))
@@ -413,8 +402,8 @@ async function run_proforma() {
                     email: config.email,
                     user_id: config.user_id,
                     v01_api_key: LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key,
-		    filepath: arg_filepath,
-		    data: arg_json
+		    filepath: arg_subsubcommand,
+		  data: JSON.parse(fs.readFileSync(0,'utf-8'))
                 }, json: true
             })
 	    console.log(JSON.stringify(apiRequest, null, 2))
