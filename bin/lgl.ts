@@ -348,7 +348,7 @@ function run_corpsec() {
 
 ///////////////////////////////////////////////////////////////////////////// proforma
 
-interface Schemalist { about: { filepath: string, title: string } } // this is a bit of a repeat; later, when we have full type definitions from schematemplates, shove it in from the actual Schemalist definition.
+interface Schemalist { about: { templateKey: string, title: string } } // this is a bit of a repeat; later, when we have full type definitions from schematemplates, shove it in from the actual Schemalist definition.
 
 async function run_proforma() {
     // snarf STDIN as JSON
@@ -366,10 +366,10 @@ async function run_proforma() {
             })
 
           if (arg_subsubcommand) {
-            // grep for this.about.filepath == subsubcommand
-            apiRequest = _.filter(apiRequest, dis=>dis.about.filepath == arg_subsubcommand)[0]
+            // grep for this.about.templateKey == subsubcommand
+            apiRequest = _.filter(apiRequest, dis=>dis.about.templateKey == arg_subsubcommand)[0]
           } else {
-            apiRequest = _.fromPairs(_.map(apiRequest, dis=>{return [dis.about.filepath, dis.about.title]} ))
+            apiRequest = _.fromPairs(_.map(apiRequest, dis=>{return [dis.about.templateKey, dis.about.title]} ))
           }
           
           console.log(JSON.stringify(apiRequest,null,2))
@@ -385,7 +385,7 @@ async function run_proforma() {
                     email: config.email,
                     user_id: config.user_id,
                     v01_api_key: LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key,
-		    filepath: arg_subsubcommand
+		    templateKey: arg_subsubcommand
                 }, json: true
             })
           console.log(JSON.stringify(apiRequest,null,2))
@@ -401,7 +401,7 @@ async function run_proforma() {
                     email: config.email,
                     user_id: config.user_id,
                     v01_api_key: LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key,
-		    filepath: arg_subsubcommand,
+		    templateKey: arg_subsubcommand,
 		  data: JSON.parse(fs.readFileSync(0,'utf-8'))
                 }, json: true
             })
@@ -418,7 +418,7 @@ async function run_proforma() {
                     email: config.email,
                     user_id: config.user_id,
                     v01_api_key: LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key,
-		    filepath: arg_subsubcommand,
+		    templateKey: arg_subsubcommand,
 		  data: JSON.parse(fs.readFileSync(0,'utf-8'))
                 }, json: true
             })
@@ -428,10 +428,10 @@ async function run_proforma() {
 
     }
     // curl -s -H 'Content-Type: application/json' -d '{"profile":{"email":"e", "identities":[{"user_id": "ui"}]}}' https://legalese.com/api/corpsec/v0.9/schemalist
-    // | json -c 'this.about.filepath=="hw3"'
+    // | json -c 'this.about.templateKey=="hw3"'
     // | json [0]
     // | json example
-    // | time json -e 'this.filepath="hw3"; this.contenttype="docx"; this.profile={"email":"e", "identities":[{"user_id": "ui"}]}'
+    // | time json -e 'this.templateKey="hw3"; this.contenttype="docx"; this.profile={"email":"e", "identities":[{"user_id": "ui"}]}'
     // | curl -s -H 'Content-Type: application/json' -d@- https://legalese.com/api/corpsec/v1.0/schema | json
 }
 

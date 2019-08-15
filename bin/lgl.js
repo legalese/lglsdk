@@ -323,11 +323,11 @@ function run_proforma() {
                 case 2:
                     apiRequest = _a.sent();
                     if (arg_subsubcommand) {
-                        // grep for this.about.filepath == subsubcommand
-                        apiRequest = _.filter(apiRequest, function (dis) { return dis.about.filepath == arg_subsubcommand; })[0];
+                        // grep for this.about.templateKey == subsubcommand
+                        apiRequest = _.filter(apiRequest, function (dis) { return dis.about.templateKey == arg_subsubcommand; })[0];
                     }
                     else {
-                        apiRequest = _.fromPairs(_.map(apiRequest, function (dis) { return [dis.about.filepath, dis.about.title]; }));
+                        apiRequest = _.fromPairs(_.map(apiRequest, function (dis) { return [dis.about.templateKey, dis.about.title]; }));
                     }
                     console.log(JSON.stringify(apiRequest, null, 2));
                     return [3 /*break*/, 4];
@@ -353,7 +353,7 @@ function run_proforma() {
                                 email: config.email,
                                 user_id: config.user_id,
                                 v01_api_key: LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key,
-                                filepath: arg_subsubcommand
+                                templateKey: arg_subsubcommand
                             }, json: true
                         })];
                 case 7:
@@ -382,7 +382,7 @@ function run_proforma() {
                                 email: config.email,
                                 user_id: config.user_id,
                                 v01_api_key: LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key,
-                                filepath: arg_subsubcommand,
+                                templateKey: arg_subsubcommand,
                                 data: JSON.parse(fs.readFileSync(0, 'utf-8'))
                             }, json: true
                         })];
@@ -412,7 +412,7 @@ function run_proforma() {
                                 email: config.email,
                                 user_id: config.user_id,
                                 v01_api_key: LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key,
-                                filepath: arg_subsubcommand,
+                                templateKey: arg_subsubcommand,
                                 data: JSON.parse(fs.readFileSync(0, 'utf-8'))
                             }, json: true
                         })];
