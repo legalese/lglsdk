@@ -293,6 +293,7 @@ async function run_init() {
             "v01_test_api_key": _.keys(api_response.app_metadata.v01_test_api_keys)[0],
         }, null, 2) + "\n");
     }
+  console.log("now look for a verification email from auth0")
 }
 
 ///////////////////////////////////////////////////////////////////////////// config
