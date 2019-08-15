@@ -41,12 +41,15 @@ environment variables:
 const cli_help_commands = {
     proforma: `subcommands for lgl proforma:
     schemalist       list all available templates, in "key: title" format
-    schemalist key   show detailed example for a specific template, in json
+    schemalist key   show detailed example for a specific template, in json.
+                     extract the "example" property for subsequent use:
+                   $ lgl schemalist hw3 | json example > example.json
     schema     key   show the JSON schema for the expected input
-    validate   key   STDIN should be JSON data; will validate against the server
-                     note that you can also do client-side validation, since the SDK
-                     contains all the schemas
+                   $ lgl schema hw3
+    validate   key   STDIN should be JSON data; will validate against the server.
+                   $ lgl -t validate hw3 < example.json
     generate         see: lgl help proforma generate
+                   $ lgl -t generate hw3 < example.json
 `,
     corpsec: `subcommands for lgl corpsec:
     search companyname
