@@ -5,6 +5,7 @@
 package-lock.json
 # because we are a typescript shop
 *~
+lglconfig.json
 
 # the below is from template at https://raw.githubusercontent.com/github/gitignore/master/Node.gitignore
 # Logs
