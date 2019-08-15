@@ -117,8 +117,8 @@ var world = load_world();
 if (arg_command == "help") {
     if (arg_subcommand && cli_help_commands[arg_subcommand]
         && // subsubcommand
-            argv._[4] && cli_help_subcommands[arg_subcommand][argv._[4]]) {
-        console.log(cli_help_subcommands[arg_subcommand][argv._[4]]);
+            arg_subsubcommand && cli_help_subcommands[arg_subcommand][argv.subsubcommand]) {
+        console.log(cli_help_subcommands[arg_subcommand][argv.subsubcommand]);
     }
     else if (arg_subcommand && cli_help_commands[arg_subcommand]) {
         console.log(cli_help_commands[arg_subcommand]);
@@ -340,6 +340,10 @@ function run_proforma() {
                 case 4: return [3 /*break*/, 19];
                 case 5:
                     if (!(arg_subcommand == "schema")) return [3 /*break*/, 10];
+                    if (!arg_subsubcommand) {
+                        console.log("lgl proforma schema <templateKey>");
+                        process.exit(1);
+                    }
                     _a.label = 6;
                 case 6:
                     _a.trys.push([6, 8, , 9]);
@@ -365,6 +369,10 @@ function run_proforma() {
                 case 9: return [3 /*break*/, 19];
                 case 10:
                     if (!(arg_subcommand == "validate")) return [3 /*break*/, 15];
+                    if (!arg_subsubcommand) {
+                        console.log("lgl proforma validate <templateKey>");
+                        process.exit(1);
+                    }
                     _a.label = 11;
                 case 11:
                     _a.trys.push([11, 13, , 14]);
@@ -391,6 +399,10 @@ function run_proforma() {
                 case 14: return [3 /*break*/, 19];
                 case 15:
                     if (!(arg_subcommand == "generate")) return [3 /*break*/, 19];
+                    if (!arg_subsubcommand) {
+                        console.log("lgl proforma generate <templateKey>");
+                        process.exit(1);
+                    }
                     _a.label = 16;
                 case 16:
                     _a.trys.push([16, 18, , 19]);

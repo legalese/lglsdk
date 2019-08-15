@@ -161,8 +161,8 @@ const world: (World | null) = <World>load_world();
 if (arg_command == "help") {
     if (arg_subcommand && cli_help_commands[arg_subcommand]
         && // subsubcommand
-        argv._[4] && cli_help_subcommands[arg_subcommand][argv._[4]]) {
-        console.log(cli_help_subcommands[arg_subcommand][argv._[4]])
+        arg_subsubcommand && cli_help_subcommands[arg_subcommand][argv.subsubcommand]) {
+        console.log(cli_help_subcommands[arg_subcommand][argv.subsubcommand])
     }
     else if (arg_subcommand && cli_help_commands[arg_subcommand]) { console.log(cli_help_commands[arg_subcommand]) }
     else {
@@ -377,6 +377,7 @@ async function run_proforma() {
         catch (e) { console.error(`lgl: error while calling API /schemalist`); console.error(e); process.exit(1); }
     }
     else if (arg_subcommand == "schema") {
+    if (! arg_subsubcommand) { console.log("lgl proforma schema <templateKey>"); process.exit(1) }
         try {
             apiRequest = await rp({
                 method: 'POST', uri: URI_BASE + "/schema",
@@ -391,7 +392,8 @@ async function run_proforma() {
         }
         catch (e) { console.error(`lgl: error while calling API /schema`); console.error(e); process.exit(1); }
     }
-    else if (arg_subcommand == "validate") {
+  else if (arg_subcommand == "validate") {
+    if (! arg_subsubcommand) { console.log("lgl proforma validate <templateKey>"); process.exit(1) }
 	try {
 	  apiRequest = await rp({
                 method: 'POST', uri: URI_BASE + "/validate",
@@ -408,6 +410,7 @@ async function run_proforma() {
         catch (e) { console.error(`lgl: error while calling API /validate`); console.error(e); process.exit(1); }
     }
     else if (arg_subcommand == "generate") {
+    if (! arg_subsubcommand) { console.log("lgl proforma generate <templateKey>"); process.exit(1) }
 	try {
 	    apiRequest = await rp({
                 method: 'POST', uri: URI_BASE + "/generate",
