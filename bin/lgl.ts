@@ -104,8 +104,8 @@ const LGL_VERBOSE = process.env.LGL_VERBOSE || argv.verbose || argv.v || argv.vv
 const LGL_TEST = process.env.LGL_TEST || argv.test || argv.t
 const URI_BASE = (process.env.LGL_URI ? process.env.LGL_URI :
     LGL_TEST
-        ? `https://api.legalese.com/api/test/corpsec/v1.0`
-        : `https://api.legalese.com/api/corpsec/v1.0`)
+        ? `https://api.legalese.com/api/test/corpsec/v1.1`
+        : `https://api.legalese.com/api/corpsec/v1.1`)
 
 const PROFORMA_FILETYPE = process.env.PROFORMA_FILETYPE || argv.filetype
 

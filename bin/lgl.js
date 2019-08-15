@@ -83,8 +83,8 @@ var LGL_VERBOSE = process.env.LGL_VERBOSE || argv.verbose || argv.v || argv.vv;
 var LGL_TEST = process.env.LGL_TEST || argv.test || argv.t;
 var URI_BASE = (process.env.LGL_URI ? process.env.LGL_URI :
     LGL_TEST
-        ? "https://api.legalese.com/api/test/corpsec/v1.0"
-        : "https://api.legalese.com/api/corpsec/v1.0");
+        ? "https://api.legalese.com/api/test/corpsec/v1.1"
+        : "https://api.legalese.com/api/corpsec/v1.1");
 var PROFORMA_FILETYPE = process.env.PROFORMA_FILETYPE || argv.filetype;
 function console_error(str) {
     if (LGL_VERBOSE) {
