@@ -108,7 +108,8 @@ To extract, run something like:
 var argv = require('minimist')(process.argv, {
     boolean: ["test", "t",
               "verbose", "v", "vv",
-              "help","h"
+              "help","h",
+              "config"
              ]
 });
 if (argv.help || argv.h) { argv._.splice(2,0,"help") }
@@ -140,7 +141,7 @@ if (arg_subsubcommand) {
 console_error(argv);
 
 let config_file: string | null
-config_file = json_filename("lglconfig.json")
+config_file = json_filename(argv.config || "lglconfig.json")
 
 interface Config {
     email?: string;

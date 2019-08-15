@@ -75,7 +75,8 @@ var cli_help_subcommands = {
 var argv = require('minimist')(process.argv, {
     boolean: ["test", "t",
         "verbose", "v", "vv",
-        "help", "h"
+        "help", "h",
+        "config"
     ]
 });
 if (argv.help || argv.h) {
@@ -105,7 +106,7 @@ if (arg_subsubcommand) {
 }
 console_error(argv);
 var config_file;
-config_file = json_filename("lglconfig.json");
+config_file = json_filename(argv.config || "lglconfig.json");
 var config;
 if (config_file != undefined) {
     config = load_json(config_file);
