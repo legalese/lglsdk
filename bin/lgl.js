@@ -335,7 +335,7 @@ function run_proforma() {
                     return [3 /*break*/, 4];
                 case 4:
                     console.log(apiRequest);
-                    return [3 /*break*/, 20];
+                    return [3 /*break*/, 19];
                 case 5:
                     if (!(arg_subcommand == "schema")) return [3 /*break*/, 10];
                     _a.label = 6;
@@ -361,7 +361,7 @@ function run_proforma() {
                     return [3 /*break*/, 9];
                 case 9:
                     console.log(apiRequest);
-                    return [3 /*break*/, 20];
+                    return [3 /*break*/, 19];
                 case 10:
                     if (!(arg_subcommand == "validate")) return [3 /*break*/, 15];
                     _a.label = 11;
@@ -388,9 +388,9 @@ function run_proforma() {
                     return [3 /*break*/, 14];
                 case 14:
                     console.log(apiRequest);
-                    return [3 /*break*/, 20];
+                    return [3 /*break*/, 19];
                 case 15:
-                    if (!(arg_subcommand == "generate")) return [3 /*break*/, 20];
+                    if (!(arg_subcommand == "generate")) return [3 /*break*/, 19];
                     _a.label = 16;
                 case 16:
                     _a.trys.push([16, 18, , 19]);
@@ -406,6 +406,7 @@ function run_proforma() {
                         })];
                 case 17:
                     apiRequest = _a.sent();
+                    console.log(JSON.stringify(apiRequest, null, 2));
                     return [3 /*break*/, 19];
                 case 18:
                     e_5 = _a.sent();
@@ -413,10 +414,7 @@ function run_proforma() {
                     console.error(e_5);
                     process.exit(1);
                     return [3 /*break*/, 19];
-                case 19:
-                    console.log(apiRequest);
-                    _a.label = 20;
-                case 20: return [2 /*return*/];
+                case 19: return [2 /*return*/];
             }
         });
     });

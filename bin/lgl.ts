@@ -405,9 +405,10 @@ async function run_proforma() {
 		    data: arg_json
                 }, json: true
             })
+	    console.log(JSON.stringify(apiRequest, null, 2))
+
         }
         catch (e) { console.error(`lgl: error while calling API /generate`); console.error(e); process.exit(1); }
-        console.log(apiRequest)
 
     }
     // curl -s -H 'Content-Type: application/json' -d '{"profile":{"email":"e", "identities":[{"user_id": "ui"}]}}' https://legalese.com/api/corpsec/v0.9/schemalist
