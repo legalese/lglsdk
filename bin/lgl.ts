@@ -68,7 +68,7 @@ const cli_help_commands = {
     you will need this password to regenerate it.
 
     If you just want to try without creating an account,
-    run   lgl --test init
+    run   lgl init --test
     to set up a test account with limited functionality.
 `,
   login: `lgl login <email>
