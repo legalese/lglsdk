@@ -20,19 +20,20 @@ const rp = require("request-promise")
 
 const cli_help = `usage: lgl [help] command subcommand ...
 commands:
-    query "question string"
-    help
+    help [command]          view more details about command
     init                    initialize account
-    config
-    demo
-    bizfile / corpsec
-    proforma
+    demo                    walks you through key functionality
+    bizfile / corpsec       retrieves company details from government backends
+    proforma                creates paperwork from templates, filled with JSON parameters
+
+    login                   reinitialize account if lglconfig.json has gone missing
+    config                  manipulate lglconfig.json. Or you could just edit it yourself.
 
 options:
     --test                  all commands will run in test mode against the dev sandbox
     --verbose               verbose logging
     --world=some.json       load environment context from some.json file
-    --config=conf.json      load configuration from conf.json file (default: ./lglconfig.json)
+    --config=conf.json      load configuration from conf.json instead of default ./lglconfig.json
 
 environment variables:
     LGL_VERBOSE   set to truthy to get more verbosity
@@ -176,7 +177,10 @@ if (arg_command == "help") {
 }
 else if (arg_command == "init") {
   if (! LGL_TEST && ! arg_subcommand) { console.log(cli_help_commands[arg_command]); process.exit(1) }
-    run_init()
+    run_init("init")
+}
+else if (arg_command == "login") { // reinitialize
+    run_init("login")
 }
 else if (arg_command == "config") {
     run_config()
@@ -217,7 +221,7 @@ function check_config() {
 
 ///////////////////////////////////////////////////////////////////////////// init
 
-async function run_init() {
+async function run_init(init_or_login : ("init" | "login") = "init" ) {
   // usage: lgl init user@email.address
   // we prompt for a password which we send to the server
   //
@@ -265,19 +269,35 @@ When you are ready to use the system for real,
     return;
   }
   else {
-    const prompt_pw = await prompts.prompt([{ type:'password', name:'pw1', message: "Enter new password: "},
-                                            { type:'password', name:'pw2', message: "Confirm password: "}]);
-    if (prompt_pw.pw1 != prompt_pw.pw2) { console.error("Passwords did not match. Please try again."); process.exit(1); }
-  
+    let prompt_pw
     let api_response
-    try { api_response = await rp({ method: 'POST', uri: URI_BASE + "/users/create", body: { email: arg_subcommand, password: prompt_pw.pw1 }, json: true }) }
-    catch (e) { console.error(`lgl: error while calling API /create`); console.error(e); process.exit(1); }
+    let snark = true;
+    if (init_or_login == "init") {
+      prompt_pw = await prompts.prompt([{ type:'password', name:'pw1', message: "Enter new password: "},
+                                              { type:'password', name:'pw2', message: "Confirm password: "}]);
+      if (prompt_pw.pw1 != prompt_pw.pw2) { console.error("Passwords did not match. Please try again."); process.exit(1); }
+      setTimeout(() => { if (snark) { console.log("We appreciate your patience. This may be slow, but it's still faster than hiring a law firm.") } }, 1000)
 
+      try { api_response = await rp({ method: 'POST', uri: URI_BASE + "/users/create", body: { email: arg_subcommand, password: prompt_pw.pw1 }, json: true }) }
+      catch (e) { console.error(`lgl: error while calling API /create`); console.error(e); process.exit(1); }
+      console.log("Creating Legalese account...");
+    }
+    else { // init_or_login == "login"
+      prompt_pw = await prompts.prompt([{ type:'password', name:'pw1', message: "Enter lgl password: "}]);
+      try { api_response = await rp({ method: 'POST', uri: URI_BASE + "/users/create", body: { email: arg_subcommand, password: prompt_pw.pw1 }, json: true }) }
+      catch (e) { console.error(`lgl: error while calling API /create`); console.error(e); process.exit(1); }
+      console.log("Re-creating Legalese account...");
+    }
+
+    snark = false;
     if (api_response === null) { console.error("lgl: got null response from API; please try again later."); process.exit(1) }
     if (api_response.api_error || api_response.response_defined == false) { console.error("lgl: got error from API:"); console.error(api_response.api_error + "\n"); process.exit(1) }
 
     // if the user already exists according to auth0 but the user deleted their lglconfig.json
-    // they will refuse to create a new account. Instead we will get a 409.
+    // and if the password doesn't match, the backend will refuse to create a new account.
+    // Instead we will get a 409. Then the user has to run lgl login instead.
+    // but if the password matches, we will make a cryptic remark to that effect.
+    if (api_response.remarks) { console.log(api_response.remarks) }
 
     // https://auth0.com/docs/integrations/using-auth0-to-secure-a-cli
     fs.writeFileSync(config_file, JSON.stringify({
@@ -290,7 +310,7 @@ When you are ready to use the system for real,
   console.log(`You have created a Legalese account!
 To proceed, please confirm your email address.
 You should see a verification request in your Inbox.`)
-  if (/gmail.com/i.test(arg_subcommand)) {
+  if (/legalese\.com|gmail\.com/i.test(arg_subcommand)) {
     // if we wanted to be really creepy
     // we could look up the MX records for the domain
     // to determine if it's hosted at Outlook, Yahoo, Gmail, or whatever

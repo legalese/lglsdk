@@ -56,7 +56,7 @@ var rp = require("request-promise");
 // subcommand: string
 // $ lgl query "are vehicles allowed in the park?"
 // it depends
-var cli_help = "usage: lgl [help] command subcommand ...\ncommands:\n    query \"question string\"\n    help\n    init                    initialize account\n    config\n    demo\n    bizfile / corpsec\n    proforma\n\noptions:\n    --test                  all commands will run in test mode against the dev sandbox\n    --verbose               verbose logging\n    --world=some.json       load environment context from some.json file\n    --config=conf.json      load configuration from conf.json file (default: ./lglconfig.json)\n\nenvironment variables:\n    LGL_VERBOSE   set to truthy to get more verbosity\n";
+var cli_help = "usage: lgl [help] command subcommand ...\ncommands:\n    help [command]          view more details about command\n    init                    initialize account\n    demo                    walks you through key functionality\n    bizfile / corpsec       retrieves company details from government backends\n    proforma                creates paperwork from templates, filled with JSON parameters\n\n    login                   reinitialize account if lglconfig.json has gone missing\n    config                  manipulate lglconfig.json. Or you could just edit it yourself.\n\noptions:\n    --test                  all commands will run in test mode against the dev sandbox\n    --verbose               verbose logging\n    --world=some.json       load environment context from some.json file\n    --config=conf.json      load configuration from conf.json instead of default ./lglconfig.json\n\nenvironment variables:\n    LGL_VERBOSE   set to truthy to get more verbosity\n";
 var cli_help_commands = {
     proforma: "subcommands for lgl proforma:\n    schemalist       list all available templates, in \"key: title\" format\n    schemalist key   show detailed example for a specific template, in json.\n                     extract the \"example\" property for subsequent use:\n                   $ lgl proforma schemalist hw3 | json example > example.json\n    schema     key   show the JSON schema for the expected input\n                   $ lgl proforma schema hw3\n    validate   key   STDIN should be JSON data; will validate against the server.\n                   $ lgl -t proforma validate hw3 < example.json\n    generate   key   see: lgl help proforma generate\n                   $ lgl -t proforma generate hw3 < example.json | json docPdf | base64 -D > example.pdf\n",
     corpsec: "subcommands for lgl corpsec:\n    search companyname\n    get    UEN\n",
@@ -134,7 +134,10 @@ else if (arg_command == "init") {
         console.log(cli_help_commands[arg_command]);
         process.exit(1);
     }
-    run_init();
+    run_init("init");
+}
+else if (arg_command == "login") { // reinitialize
+    run_init("login");
 }
 else if (arg_command == "config") {
     run_config();
@@ -171,9 +174,10 @@ function check_config() {
     }
 }
 ///////////////////////////////////////////////////////////////////////////// init
-function run_init() {
+function run_init(init_or_login) {
+    if (init_or_login === void 0) { init_or_login = "init"; }
     return __awaiter(this, void 0, void 0, function () {
-        var prompt_pw, api_response, e_1;
+        var prompt_pw, api_response, snark_1, e_1, e_2;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -209,15 +213,22 @@ function run_init() {
                     }, null, 2) + "\n");
                     console.log("You have set up a Legalese account with test credentials.\nCommands will work with limited functionality for demo purposes.\nWhen you are ready to use the system for real,\n  rm lglconfig.json\n  lgl init <email>\n");
                     return [2 /*return*/];
-                case 1: return [4 /*yield*/, prompts.prompt([{ type: 'password', name: 'pw1', message: "Enter new password: " },
-                        { type: 'password', name: 'pw2', message: "Confirm password: " }])];
+                case 1:
+                    prompt_pw = void 0;
+                    api_response = void 0;
+                    snark_1 = true;
+                    if (!(init_or_login == "init")) return [3 /*break*/, 7];
+                    return [4 /*yield*/, prompts.prompt([{ type: 'password', name: 'pw1', message: "Enter new password: " },
+                            { type: 'password', name: 'pw2', message: "Confirm password: " }])];
                 case 2:
                     prompt_pw = _a.sent();
                     if (prompt_pw.pw1 != prompt_pw.pw2) {
                         console.error("Passwords did not match. Please try again.");
                         process.exit(1);
                     }
-                    api_response = void 0;
+                    setTimeout(function () { if (snark_1) {
+                        console.log("We appreciate your patience. This may be slow, but it's still faster than hiring a law firm.");
+                    } }, 1000);
                     _a.label = 3;
                 case 3:
                     _a.trys.push([3, 5, , 6]);
@@ -232,6 +243,29 @@ function run_init() {
                     process.exit(1);
                     return [3 /*break*/, 6];
                 case 6:
+                    console.log("Creating Legalese account...");
+                    return [3 /*break*/, 13];
+                case 7: return [4 /*yield*/, prompts.prompt([{ type: 'password', name: 'pw1', message: "Enter lgl password: " }])];
+                case 8:
+                    prompt_pw = _a.sent();
+                    _a.label = 9;
+                case 9:
+                    _a.trys.push([9, 11, , 12]);
+                    return [4 /*yield*/, rp({ method: 'POST', uri: URI_BASE + "/users/create", body: { email: arg_subcommand, password: prompt_pw.pw1 }, json: true })];
+                case 10:
+                    api_response = _a.sent();
+                    return [3 /*break*/, 12];
+                case 11:
+                    e_2 = _a.sent();
+                    console.error("lgl: error while calling API /create");
+                    console.error(e_2);
+                    process.exit(1);
+                    return [3 /*break*/, 12];
+                case 12:
+                    console.log("Re-creating Legalese account...");
+                    _a.label = 13;
+                case 13:
+                    snark_1 = false;
                     if (api_response === null) {
                         console.error("lgl: got null response from API; please try again later.");
                         process.exit(1);
@@ -242,7 +276,12 @@ function run_init() {
                         process.exit(1);
                     }
                     // if the user already exists according to auth0 but the user deleted their lglconfig.json
-                    // they will refuse to create a new account. Instead we will get a 409.
+                    // and if the password doesn't match, the backend will refuse to create a new account.
+                    // Instead we will get a 409. Then the user has to run lgl login instead.
+                    // but if the password matches, we will make a cryptic remark to that effect.
+                    if (api_response.remarks) {
+                        console.log(api_response.remarks);
+                    }
                     // https://auth0.com/docs/integrations/using-auth0-to-secure-a-cli
                     fs.writeFileSync(config_file, JSON.stringify({
                         "email": api_response.email,
@@ -250,21 +289,21 @@ function run_init() {
                         "v01_live_api_key": _.keys(api_response.app_metadata.v01_live_api_keys)[0],
                         "v01_test_api_key": _.keys(api_response.app_metadata.v01_test_api_keys)[0],
                     }, null, 2) + "\n");
-                    _a.label = 7;
-                case 7:
+                    _a.label = 14;
+                case 14:
                     console.log("You have created a Legalese account!\nTo proceed, please confirm your email address.\nYou should see a verification request in your Inbox.");
-                    if (!/gmail.com/i.test(arg_subcommand)) return [3 /*break*/, 9];
+                    if (!/legalese\.com|gmail\.com/i.test(arg_subcommand)) return [3 /*break*/, 16];
                     // if we wanted to be really creepy
                     // we could look up the MX records for the domain
                     // to determine if it's hosted at Outlook, Yahoo, Gmail, or whatever
                     return [4 /*yield*/, open("https://www.gmail.com/")];
-                case 8:
+                case 15:
                     // if we wanted to be really creepy
                     // we could look up the MX records for the domain
                     // to determine if it's hosted at Outlook, Yahoo, Gmail, or whatever
                     _a.sent();
-                    _a.label = 9;
-                case 9: return [2 /*return*/];
+                    _a.label = 16;
+                case 16: return [2 /*return*/];
             }
         });
     });
@@ -307,7 +346,7 @@ function run_corpsec() {
 }
 function run_proforma() {
     return __awaiter(this, void 0, void 0, function () {
-        var apiRequest, e_2, e_3, e_4, e_5;
+        var apiRequest, e_3, e_4, e_5, e_6;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -335,9 +374,9 @@ function run_proforma() {
                     console.log(JSON.stringify(apiRequest, null, 2));
                     return [3 /*break*/, 4];
                 case 3:
-                    e_2 = _a.sent();
+                    e_3 = _a.sent();
                     console.error("lgl: error while calling API /schemalist");
-                    console.error(e_2);
+                    console.error(e_3);
                     process.exit(1);
                     return [3 /*break*/, 4];
                 case 4: return [3 /*break*/, 19];
@@ -364,9 +403,9 @@ function run_proforma() {
                     console.log(JSON.stringify(apiRequest, null, 2));
                     return [3 /*break*/, 9];
                 case 8:
-                    e_3 = _a.sent();
+                    e_4 = _a.sent();
                     console.error("lgl: error while calling API /schema");
-                    console.error(e_3);
+                    console.error(e_4);
                     process.exit(1);
                     return [3 /*break*/, 9];
                 case 9: return [3 /*break*/, 19];
@@ -394,9 +433,9 @@ function run_proforma() {
                     console.log(JSON.stringify(apiRequest, null, 2));
                     return [3 /*break*/, 14];
                 case 13:
-                    e_4 = _a.sent();
+                    e_5 = _a.sent();
                     console.error("lgl: error while calling API /validate");
-                    console.error(e_4);
+                    console.error(e_5);
                     process.exit(1);
                     return [3 /*break*/, 14];
                 case 14: return [3 /*break*/, 19];
@@ -424,9 +463,9 @@ function run_proforma() {
                     console.log(JSON.stringify(apiRequest, null, 2));
                     return [3 /*break*/, 19];
                 case 18:
-                    e_5 = _a.sent();
+                    e_6 = _a.sent();
                     console.error("lgl: error while calling API /generate");
-                    console.error(e_5);
+                    console.error(e_6);
                     process.exit(1);
                     return [3 /*break*/, 19];
                 case 19: return [2 /*return*/];
