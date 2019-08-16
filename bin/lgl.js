@@ -48,6 +48,7 @@ var fs = __importStar(require("fs"));
 var _ = __importStar(require("lodash"));
 var findUp = __importStar(require("find-up"));
 var prompts = __importStar(require("prompts"));
+var open = require("open");
 var rp = require("request-promise");
 //lgl --world=somefile.json command subcommand
 // --world=somefile.json
@@ -55,12 +56,12 @@ var rp = require("request-promise");
 // subcommand: string
 // $ lgl query "are vehicles allowed in the park?"
 // it depends
-var cli_help = "usage: lgl [help] command subcommand ...\ncommands:\n    query \"question string\"\n    help\n    init\n    login      recover lglconfig.json using password\n    config\n    demo\n    bizfile / corpsec\n    proforma\n\noptions:\n    --test                  all commands will run in test mode against the dev sandbox\n    --verbose               verbose logging\n    --world=some.json       load environment context from some.json file\n    --config=conf.json      load configuration from conf.json file (default: ./lglconfig.json)\n\nenvironment variables:\n    LGL_VERBOSE   set to truthy to get more verbosity\n";
+var cli_help = "usage: lgl [help] command subcommand ...\ncommands:\n    query \"question string\"\n    help\n    init                    initialize account\n    config\n    demo\n    bizfile / corpsec\n    proforma\n\noptions:\n    --test                  all commands will run in test mode against the dev sandbox\n    --verbose               verbose logging\n    --world=some.json       load environment context from some.json file\n    --config=conf.json      load configuration from conf.json file (default: ./lglconfig.json)\n\nenvironment variables:\n    LGL_VERBOSE   set to truthy to get more verbosity\n";
 var cli_help_commands = {
     proforma: "subcommands for lgl proforma:\n    schemalist       list all available templates, in \"key: title\" format\n    schemalist key   show detailed example for a specific template, in json.\n                     extract the \"example\" property for subsequent use:\n                   $ lgl proforma schemalist hw3 | json example > example.json\n    schema     key   show the JSON schema for the expected input\n                   $ lgl proforma schema hw3\n    validate   key   STDIN should be JSON data; will validate against the server.\n                   $ lgl -t proforma validate hw3 < example.json\n    generate   key   see: lgl help proforma generate\n                   $ lgl -t proforma generate hw3 < example.json | json docPdf | base64 -D > example.pdf\n",
     corpsec: "subcommands for lgl corpsec:\n    search companyname\n    get    UEN\n",
     demo: "subcommands for lgl demo:\n    demo all\n    demo corpsec\n    demo proforma\n",
-    init: "lgl init <email>\n    Sets up an account at the Legalese backend using <email>.\n    The backend returns credentials including API keys.\n    Saves credentials to lglconfig.json in the current directory\n    Prompts you for a password; if you ever lose your lglconfig.json,\n        you will need this password to regenerate it.\n",
+    init: "lgl init <email>\n    Sets up an account at the Legalese backend using <email>.\n    The backend returns credentials including API keys; they\n    get saved into ./lglconfig.json. This command will prompt\n    you for a password. If you ever lose your lglconfig.json,\n    you will need this password to regenerate it.\n\n    If you just want to try without creating an account,\n    run   lgl --test init\n    to set up a test account with limited functionality.\n",
     login: "lgl login <email>\n    If you've accidentally lost your lglconfig.json file,\n    you can repopulate it from the server by logging in with\n    the email and password you previously set up.\n",
     config: "subcommands for lgl config:\n    foo=bar    save foo=bar to config\n    foo        show value of foo\n",
 };
@@ -129,6 +130,10 @@ if (arg_command == "help") {
     }
 }
 else if (arg_command == "init") {
+    if (!LGL_TEST && !arg_subcommand) {
+        console.log(cli_help_commands[arg_command]);
+        process.exit(1);
+    }
     run_init();
 }
 else if (arg_command == "config") {
@@ -195,39 +200,40 @@ function run_init() {
                         config_file = "lglconfig.json";
                         console_error("config_file is not defined! will proceed with " + config_file + " in current directory.");
                     }
-                    return [4 /*yield*/, prompts.prompt([{
-                                type: 'password',
-                                name: 'pw1',
-                                message: "Enter new password: "
-                            },
-                            {
-                                type: 'password',
-                                name: 'pw2',
-                                message: "Confirm password: "
-                            }])];
-                case 1:
+                    if (!LGL_TEST) return [3 /*break*/, 1];
+                    fs.writeFileSync(config_file, JSON.stringify({
+                        "email": "demo-20190808@example.com",
+                        "user_id": "5d4c03aa302f420cc73dcc05",
+                        "v01_test_api_key": "f4571b7c-be77-11e9-b309-a72af58ab7fe",
+                        "v01_live_api_key": "f4571b7c-be77-11e9-b309-a72af58ab7fe",
+                    }, null, 2) + "\n");
+                    console.log("You have set up a Legalese account with test credentials.\nCommands will work with limited functionality for demo purposes.\nWhen you are ready to use the system for real,\n  rm lglconfig.json\n  lgl init <email>\n");
+                    return [2 /*return*/];
+                case 1: return [4 /*yield*/, prompts.prompt([{ type: 'password', name: 'pw1', message: "Enter new password: " },
+                        { type: 'password', name: 'pw2', message: "Confirm password: " }])];
+                case 2:
                     prompt_pw = _a.sent();
                     if (prompt_pw.pw1 != prompt_pw.pw2) {
-                        console.error("Passwords did not match. Try again.");
+                        console.error("Passwords did not match. Please try again.");
                         process.exit(1);
                     }
-                    _a.label = 2;
-                case 2:
-                    _a.trys.push([2, 4, , 5]);
-                    return [4 /*yield*/, rp({ method: 'POST', uri: URI_BASE + "/users/create", body: { email: arg_subcommand, password: prompt_pw.pw1 }, json: true })];
+                    api_response = void 0;
+                    _a.label = 3;
                 case 3:
-                    api_response = _a.sent();
-                    return [3 /*break*/, 5];
+                    _a.trys.push([3, 5, , 6]);
+                    return [4 /*yield*/, rp({ method: 'POST', uri: URI_BASE + "/users/create", body: { email: arg_subcommand, password: prompt_pw.pw1 }, json: true })];
                 case 4:
+                    api_response = _a.sent();
+                    return [3 /*break*/, 6];
+                case 5:
                     e_1 = _a.sent();
                     console.error("lgl: error while calling API /create");
                     console.error(e_1);
                     process.exit(1);
-                    return [3 /*break*/, 5];
-                case 5:
-                    // TODO: add validation here! let's see if the response from the API was what we expected.
+                    return [3 /*break*/, 6];
+                case 6:
                     if (api_response === null) {
-                        console.error("lgl: got null response from API");
+                        console.error("lgl: got null response from API; please try again later.");
                         process.exit(1);
                     }
                     if (api_response.api_error || api_response.response_defined == false) {
@@ -237,32 +243,28 @@ function run_init() {
                     }
                     // if the user already exists according to auth0 but the user deleted their lglconfig.json
                     // they will refuse to create a new account. Instead we will get a 409.
-                    // the /create api needs to hand us an intelligible error message
-                    // and we can pass that on the user and instruct them to run a different command -- rekey? lostkey?
-                    if (LGL_TEST) {
-                        fs.writeFileSync(config_file, JSON.stringify({
-                            "potato": "3",
-                            "email": "demo-20190808@example.com",
-                            "orig_email": arg_subcommand,
-                            "user_id": "auth0|5d4c03aa302f420cc73dcc05",
-                            "v01_test_api_key": "",
-                            "v01_live_api_key": ""
-                        }, null, 2) + "\n");
-                    }
-                    else {
-                        // https://auth0.com/docs/integrations/using-auth0-to-secure-a-cli
-                        // call the api.legalese.com/api/lgl-init endpoint to write an entry into our users database
-                        // run an authorization loop against auth0
-                        // lgl client creates a random password; creates an auth0 account using that username and passwrod
-                        fs.writeFileSync(config_file, JSON.stringify({
-                            "email": api_response.email,
-                            "user_id": api_response.user_id,
-                            "v01_live_api_key": _.keys(api_response.app_metadata.v01_live_api_keys)[0],
-                            "v01_test_api_key": _.keys(api_response.app_metadata.v01_test_api_keys)[0],
-                        }, null, 2) + "\n");
-                    }
-                    console.log("now look for a verification email from auth0");
-                    return [2 /*return*/];
+                    // https://auth0.com/docs/integrations/using-auth0-to-secure-a-cli
+                    fs.writeFileSync(config_file, JSON.stringify({
+                        "email": api_response.email,
+                        "user_id": api_response.user_id,
+                        "v01_live_api_key": _.keys(api_response.app_metadata.v01_live_api_keys)[0],
+                        "v01_test_api_key": _.keys(api_response.app_metadata.v01_test_api_keys)[0],
+                    }, null, 2) + "\n");
+                    _a.label = 7;
+                case 7:
+                    console.log("You have created a Legalese account!\nTo proceed, please confirm your email address.\nYou should see a verification request in your Inbox.");
+                    if (!/gmail.com/i.test(arg_subcommand)) return [3 /*break*/, 9];
+                    // if we wanted to be really creepy
+                    // we could look up the MX records for the domain
+                    // to determine if it's hosted at Outlook, Yahoo, Gmail, or whatever
+                    return [4 /*yield*/, open("https://www.gmail.com/")];
+                case 8:
+                    // if we wanted to be really creepy
+                    // we could look up the MX records for the domain
+                    // to determine if it's hosted at Outlook, Yahoo, Gmail, or whatever
+                    _a.sent();
+                    _a.label = 9;
+                case 9: return [2 /*return*/];
             }
         });
     });

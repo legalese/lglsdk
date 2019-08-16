@@ -6,6 +6,7 @@ import * as _ from "lodash"
 import * as path from "path"
 import * as findUp from "find-up"
 import * as prompts from "prompts"
+const open = require("open")
 const rp = require("request-promise")
 
 //lgl --world=somefile.json command subcommand
@@ -21,8 +22,7 @@ const cli_help = `usage: lgl [help] command subcommand ...
 commands:
     query "question string"
     help
-    init
-    login      recover lglconfig.json using password
+    init                    initialize account
     config
     demo
     bizfile / corpsec
@@ -62,10 +62,14 @@ const cli_help_commands = {
 `,
     init: `lgl init <email>
     Sets up an account at the Legalese backend using <email>.
-    The backend returns credentials including API keys.
-    Saves credentials to lglconfig.json in the current directory
-    Prompts you for a password; if you ever lose your lglconfig.json,
-        you will need this password to regenerate it.
+    The backend returns credentials including API keys; they
+    get saved into ./lglconfig.json. This command will prompt
+    you for a password. If you ever lose your lglconfig.json,
+    you will need this password to regenerate it.
+
+    If you just want to try without creating an account,
+    run   lgl --test init
+    to set up a test account with limited functionality.
 `,
   login: `lgl login <email>
     If you've accidentally lost your lglconfig.json file,
@@ -171,6 +175,7 @@ if (arg_command == "help") {
     }
 }
 else if (arg_command == "init") {
+  if (! LGL_TEST && ! arg_subcommand) { console.log(cli_help_commands[arg_command]); process.exit(1) }
     run_init()
 }
 else if (arg_command == "config") {
@@ -242,65 +247,55 @@ async function run_init() {
         console_error(`config_file is not defined! will proceed with ${config_file} in current directory.`);
     }
 
-  
-  // prompt user for password
-  const prompt_pw = await prompts.prompt([{
-    type:'password',
-    name:'pw1',
-    message: "Enter new password: "},
-                                          {
-    type:'password',
-    name:'pw2',
-      message: "Confirm password: "}]);
-  if (prompt_pw.pw1 != prompt_pw.pw2) {
-    console.error("Passwords did not match. Try again.");
-    process.exit(1);
+  if (LGL_TEST) {
+    fs.writeFileSync(config_file, JSON.stringify(
+      {
+        "email": "demo-20190808@example.com",
+        "user_id": "5d4c03aa302f420cc73dcc05",
+        "v01_test_api_key": "f4571b7c-be77-11e9-b309-a72af58ab7fe",
+        "v01_live_api_key": "f4571b7c-be77-11e9-b309-a72af58ab7fe",
+      }
+      , null, 2) + "\n");
+    console.log(`You have set up a Legalese account with test credentials.
+Commands will work with limited functionality for demo purposes.
+When you are ready to use the system for real,
+  rm lglconfig.json
+  lgl init <email>
+`);
+    return;
   }
+  else {
+    const prompt_pw = await prompts.prompt([{ type:'password', name:'pw1', message: "Enter new password: "},
+                                            { type:'password', name:'pw2', message: "Confirm password: "}]);
+    if (prompt_pw.pw1 != prompt_pw.pw2) { console.error("Passwords did not match. Please try again."); process.exit(1); }
   
     let api_response
-  try { api_response = await rp({ method: 'POST', uri: URI_BASE + "/users/create", body: { email: arg_subcommand, password: prompt_pw.pw1 }, json: true }) }
+    try { api_response = await rp({ method: 'POST', uri: URI_BASE + "/users/create", body: { email: arg_subcommand, password: prompt_pw.pw1 }, json: true }) }
     catch (e) { console.error(`lgl: error while calling API /create`); console.error(e); process.exit(1); }
-    // TODO: add validation here! let's see if the response from the API was what we expected.
 
-    if (api_response === null) {
-        console.error("lgl: got null response from API");
-        process.exit(1)
-    }
-    if (api_response.api_error || api_response.response_defined == false) {
-        console.error("lgl: got error from API:");
-        console.error(api_response.api_error + "\n");
-        process.exit(1)
-    }
+    if (api_response === null) { console.error("lgl: got null response from API; please try again later."); process.exit(1) }
+    if (api_response.api_error || api_response.response_defined == false) { console.error("lgl: got error from API:"); console.error(api_response.api_error + "\n"); process.exit(1) }
 
     // if the user already exists according to auth0 but the user deleted their lglconfig.json
     // they will refuse to create a new account. Instead we will get a 409.
-    // the /create api needs to hand us an intelligible error message
-    // and we can pass that on the user and instruct them to run a different command -- rekey? lostkey?
 
-    if (LGL_TEST) {
-        fs.writeFileSync(config_file, JSON.stringify(
-            {
-                "potato": "3",
-                "email": "demo-20190808@example.com",
-                "orig_email": arg_subcommand,
-                "user_id": "auth0|5d4c03aa302f420cc73dcc05",
-                "v01_test_api_key": "",
-                "v01_live_api_key": ""
-            }
-            , null, 2) + "\n");
-    } else {
-        // https://auth0.com/docs/integrations/using-auth0-to-secure-a-cli
-        // call the api.legalese.com/api/lgl-init endpoint to write an entry into our users database
-        // run an authorization loop against auth0
-        // lgl client creates a random password; creates an auth0 account using that username and passwrod
-        fs.writeFileSync(config_file, JSON.stringify({
-            "email": api_response.email,
-            "user_id": api_response.user_id, // this error doesn't stop compilation.
-            "v01_live_api_key": _.keys(api_response.app_metadata.v01_live_api_keys)[0],
-            "v01_test_api_key": _.keys(api_response.app_metadata.v01_test_api_keys)[0],
-        }, null, 2) + "\n");
-    }
-  console.log("now look for a verification email from auth0")
+    // https://auth0.com/docs/integrations/using-auth0-to-secure-a-cli
+    fs.writeFileSync(config_file, JSON.stringify({
+      "email": api_response.email,
+      "user_id": api_response.user_id, // this error doesn't stop compilation.
+      "v01_live_api_key": _.keys(api_response.app_metadata.v01_live_api_keys)[0],
+      "v01_test_api_key": _.keys(api_response.app_metadata.v01_test_api_keys)[0],
+    }, null, 2) + "\n");
+  }
+  console.log(`You have created a Legalese account!
+To proceed, please confirm your email address.
+You should see a verification request in your Inbox.`)
+  if (/gmail.com/i.test(arg_subcommand)) {
+    // if we wanted to be really creepy
+    // we could look up the MX records for the domain
+    // to determine if it's hosted at Outlook, Yahoo, Gmail, or whatever
+    await open("https://www.gmail.com/")
+  }
 }
 
 ///////////////////////////////////////////////////////////////////////////// config
