@@ -114,10 +114,14 @@ var argv = require('minimist')(process.argv, {
     boolean: ["test", "t",
               "verbose", "v", "vv",
               "help","h",
+              "v09", // send "filepath" instead of "templateKey", for the v0.9 and v1.0 APIs
               "config"
              ]
 });
+
 if (argv.help || argv.h) { argv._.splice(2,0,"help") }
+
+let templateKey = argv.v09 ? "filepath" : "templateKey"
 
 const LGL_VERBOSE = process.env.LGL_VERBOSE || argv.verbose || argv.v || argv.vv
 const LGL_TEST = process.env.LGL_TEST || argv.test || argv.t
@@ -364,7 +368,7 @@ function run_corpsec() {
 
 ///////////////////////////////////////////////////////////////////////////// proforma
 
-interface Schemalist { about: { templateKey: string, title: string } } // this is a bit of a repeat; later, when we have full type definitions from schematemplates, shove it in from the actual Schemalist definition.
+interface Schemalist { about: { filepath?: string, templateKey?: string, title: string } } // this is a bit of a repeat; later, when we have full type definitions from schematemplates, shove it in from the actual Schemalist definition.
 
 async function run_proforma() {
     // snarf STDIN as JSON
@@ -383,9 +387,9 @@ async function run_proforma() {
 
           if (arg_subsubcommand) {
             // grep for this.about.templateKey == subsubcommand
-            apiRequest = _.filter(apiRequest, dis=>dis.about.templateKey == arg_subsubcommand)[0]
+            apiRequest = _.filter(apiRequest, dis=>dis.about[templateKey] == arg_subsubcommand)[0]
           } else {
-            apiRequest = _.fromPairs(_.map(apiRequest, dis=>{return [dis.about.templateKey, dis.about.title]} ))
+            apiRequest = _.fromPairs(_.map(apiRequest, dis=>{return [dis.about[templateKey], dis.about.title]} ))
           }
           
           console.log(JSON.stringify(apiRequest,null,2))
@@ -401,7 +405,7 @@ async function run_proforma() {
                     email: config.email,
                     user_id: config.user_id,
                     v01_api_key: LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key,
-		    templateKey: arg_subsubcommand
+		    [templateKey]: arg_subsubcommand
                 }, json: true
             })
           console.log(JSON.stringify(apiRequest,null,2))
@@ -417,7 +421,7 @@ async function run_proforma() {
                     email: config.email,
                     user_id: config.user_id,
                     v01_api_key: LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key,
-		    templateKey: arg_subsubcommand,
+		    [templateKey]: arg_subsubcommand,
 		  data: JSON.parse(fs.readFileSync(0,'utf-8'))
                 }, json: true
             })
@@ -434,7 +438,7 @@ async function run_proforma() {
                     email: config.email,
                     user_id: config.user_id,
                     v01_api_key: LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key,
-		    templateKey: arg_subsubcommand,
+		    [templateKey]: arg_subsubcommand,
 		  data: JSON.parse(fs.readFileSync(0,'utf-8'))
                 }, json: true
             })
