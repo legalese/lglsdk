@@ -41,10 +41,10 @@ environment variables:
 
 const cli_help_commands = {
     proforma: `subcommands for lgl proforma:
-    schemalist       list all available templates, in "key: title" format
-    schemalist key   show detailed example for a specific template, in json.
-                     extract the "example" property for subsequent use:
-                   $ lgl proforma schemalist hw3 | json example > example.json
+    schemalist       show detailed example for a specific template, in json.
+                   $ lgl proforma schemalist hw3 > hw3.json
+    schemalist key   extract the "example" property for subsequent use:
+                   $ lgl proforma schemalist hw3 example > example.json
     schema     key   show the JSON schema for the expected input
                    $ lgl proforma schema hw3
     validate   key   STDIN should be JSON data; will validate against the server.
@@ -86,9 +86,12 @@ const cli_help_commands = {
 const cli_help_subcommands = {
     proforma: {
         schemalist: `sub-subcommands for lgl proforma schemalist:
-    schemalist key   show detailed example for a specific template, in json.
-                     extract the "example" property for subsequent use:
-                   $ lgl proforma schemalist hw3 | json example > example.json
+
+    schemalist       show detailed example for a specific template, in json.
+                   $ lgl proforma schemalist hw3 > hw3.json
+
+    schemalist key   extract the "example" property for subsequent use:
+                   $ lgl proforma schemalist hw3 example > example.json
 `,
       schema: `    schema     key   show the JSON schema for the expected input
                    $ lgl proforma schema hw3
@@ -114,20 +117,20 @@ var argv = require('minimist')(process.argv, {
     boolean: ["test", "t",
               "verbose", "v", "vv",
               "help","h",
-              "v09", // send "filepath" instead of "templateKey", for the v0.9 and v1.0 APIs
+              "version", // --version=0.9 send "filepath" instead of "templateKey", for the v0.9 and v1.0 APIs
               "config"
              ]
 });
 
 if (argv.help || argv.h) { argv._.splice(2,0,"help") }
 
-let templateKey = argv.v09 ? "filepath" : "templateKey"
+let templateKey = (argv.version && argv.version == "0.9") ? "filepath" : "templateKey"
 
 const LGL_VERBOSE = process.env.LGL_VERBOSE || argv.verbose || argv.v || argv.vv
 const LGL_TEST = process.env.LGL_TEST || argv.test || argv.t
 const URI_BASE = (process.env.LGL_URI ? process.env.LGL_URI :
     LGL_TEST
-        ? `https://api.legalese.com/api/test/corpsec/v1.1`
+        ? `https://api.legalese.com/api/corpsec/v1.1`
         : `https://api.legalese.com/api/corpsec/v1.1`)
 
 const PROFORMA_FILETYPE = process.env.PROFORMA_FILETYPE || argv.filetype
@@ -146,6 +149,7 @@ var arg_subsubcommand = argv._[4];
 if (arg_subsubcommand) {
     console_error(`subsubcommand: ${arg_subsubcommand}`);
 }
+var arg_subsubsubcommand = argv._[5];
 
 console_error(argv);
 
@@ -171,8 +175,8 @@ const world: (World | null) = <World>load_world();
 if (arg_command == "help") {
     if (arg_subcommand && cli_help_commands[arg_subcommand]
         && // subsubcommand
-        arg_subsubcommand && cli_help_subcommands[arg_subcommand][argv.subsubcommand]) {
-        console.log(cli_help_subcommands[arg_subcommand][argv.subsubcommand])
+        arg_subsubcommand && cli_help_subcommands[arg_subcommand][arg_subsubcommand]) {
+        console.log(cli_help_subcommands[arg_subcommand][arg_subsubcommand])
     }
     else if (arg_subcommand && cli_help_commands[arg_subcommand]) { console.log(cli_help_commands[arg_subcommand]) }
     else {
@@ -390,6 +394,12 @@ async function run_proforma() {
             apiRequest = _.filter(apiRequest, dis=>dis.about[templateKey] == arg_subsubcommand)[0]
           } else {
             apiRequest = _.fromPairs(_.map(apiRequest, dis=>{return [dis.about[templateKey], dis.about.title]} ))
+          }
+
+          if (arg_subsubsubcommand
+              &&
+              _.get(apiRequest, arg_subsubsubcommand)) {
+            apiRequest = _.get(apiRequest, arg_subsubsubcommand);
           }
           
           console.log(JSON.stringify(apiRequest,null,2))

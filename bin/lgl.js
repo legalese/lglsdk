@@ -58,7 +58,7 @@ var rp = require("request-promise");
 // it depends
 var cli_help = "usage: lgl [help] command subcommand ...\ncommands:\n    help [command]          view more details about command\n    init                    initialize account\n    demo                    walks you through key functionality\n    bizfile / corpsec       retrieves company details from government backends\n    proforma                creates paperwork from templates, filled with JSON parameters\n\n    login                   reinitialize account if lglconfig.json has gone missing\n    config                  manipulate lglconfig.json. Or you could just edit it yourself.\n\noptions:\n    --test                  all commands will run in test mode against the dev sandbox\n    --verbose               verbose logging\n    --world=some.json       load environment context from some.json file\n    --config=conf.json      load configuration from conf.json instead of default ./lglconfig.json\n\nenvironment variables:\n    LGL_VERBOSE   set to truthy to get more verbosity\n";
 var cli_help_commands = {
-    proforma: "subcommands for lgl proforma:\n    schemalist       list all available templates, in \"key: title\" format\n    schemalist key   show detailed example for a specific template, in json.\n                     extract the \"example\" property for subsequent use:\n                   $ lgl proforma schemalist hw3 | json example > example.json\n    schema     key   show the JSON schema for the expected input\n                   $ lgl proforma schema hw3\n    validate   key   STDIN should be JSON data; will validate against the server.\n                   $ lgl -t proforma validate hw3 < example.json\n    generate   key   see: lgl help proforma generate\n                   $ lgl -t proforma generate hw3 < example.json | json docPdf | base64 -D > example.pdf\n",
+    proforma: "subcommands for lgl proforma:\n    schemalist       show detailed example for a specific template, in json.\n                   $ lgl proforma schemalist hw3 > hw3.json\n    schemalist key   extract the \"example\" property for subsequent use:\n                   $ lgl proforma schemalist hw3 example > example.json\n    schema     key   show the JSON schema for the expected input\n                   $ lgl proforma schema hw3\n    validate   key   STDIN should be JSON data; will validate against the server.\n                   $ lgl -t proforma validate hw3 < example.json\n    generate   key   see: lgl help proforma generate\n                   $ lgl -t proforma generate hw3 < example.json | json docPdf | base64 -D > example.pdf\n",
     corpsec: "subcommands for lgl corpsec:\n    search companyname\n    get    UEN\n",
     demo: "subcommands for lgl demo:\n    demo all\n    demo corpsec\n    demo proforma\n",
     init: "lgl init <email>\n    Sets up an account at the Legalese backend using <email>.\n    The backend returns credentials including API keys; they\n    get saved into ./lglconfig.json. This command will prompt\n    you for a password. If you ever lose your lglconfig.json,\n    you will need this password to regenerate it.\n\n    If you just want to try without creating an account,\n    run   lgl init --test\n    to set up a test account with limited functionality.\n",
@@ -67,7 +67,7 @@ var cli_help_commands = {
 };
 var cli_help_subcommands = {
     proforma: {
-        schemalist: "sub-subcommands for lgl proforma schemalist:\n    schemalist key   show detailed example for a specific template, in json.\n                     extract the \"example\" property for subsequent use:\n                   $ lgl proforma schemalist hw3 | json example > example.json\n",
+        schemalist: "sub-subcommands for lgl proforma schemalist:\n\n    schemalist       show detailed example for a specific template, in json.\n                   $ lgl proforma schemalist hw3 > hw3.json\n\n    schemalist key   extract the \"example\" property for subsequent use:\n                   $ lgl proforma schemalist hw3 example > example.json\n",
         schema: "    schema     key   show the JSON schema for the expected input\n                   $ lgl proforma schema hw3\n",
         validate: "      validate   key   STDIN should be JSON data; will validate against the server.\n                   $ lgl -t proforma validate hw3 < example.json\n",
         generate: "sub-subcommands for lgl proforma generate:\n    key   STDIN should be JSON data; will fill a template\n    generate   key --filetype=\"docx\"    save as Word docx file  (property: docDocx)\n    generate   key --filetype=\"pdf\"     save as PDF file        (property: docPdf)\n    generate   key --filetype=\"pdf\" --filename=\"myfilename\" save as myfilename.pdf\n\nFile content is base64-encoded, under a filetype-specific property.\nTo extract, run something like:\n\n  $ lgl -t proforma generate hw3 < example.json | json docPdf | base64 -D > example.pdf\n"
@@ -77,19 +77,19 @@ var argv = require('minimist')(process.argv, {
     boolean: ["test", "t",
         "verbose", "v", "vv",
         "help", "h",
-        "v09",
+        "version",
         "config"
     ]
 });
 if (argv.help || argv.h) {
     argv._.splice(2, 0, "help");
 }
-var templateKey = argv.v09 ? "filepath" : "templateKey";
+var templateKey = (argv.version && argv.version == "0.9") ? "filepath" : "templateKey";
 var LGL_VERBOSE = process.env.LGL_VERBOSE || argv.verbose || argv.v || argv.vv;
 var LGL_TEST = process.env.LGL_TEST || argv.test || argv.t;
 var URI_BASE = (process.env.LGL_URI ? process.env.LGL_URI :
     LGL_TEST
-        ? "https://api.legalese.com/api/test/corpsec/v1.1"
+        ? "https://api.legalese.com/api/corpsec/v1.1"
         : "https://api.legalese.com/api/corpsec/v1.1");
 var PROFORMA_FILETYPE = process.env.PROFORMA_FILETYPE || argv.filetype;
 function console_error(str) {
@@ -107,6 +107,7 @@ var arg_subsubcommand = argv._[4];
 if (arg_subsubcommand) {
     console_error("subsubcommand: " + arg_subsubcommand);
 }
+var arg_subsubsubcommand = argv._[5];
 console_error(argv);
 var config_file;
 config_file = json_filename(argv.config || "lglconfig.json");
@@ -121,8 +122,8 @@ var world = load_world();
 if (arg_command == "help") {
     if (arg_subcommand && cli_help_commands[arg_subcommand]
         && // subsubcommand
-            arg_subsubcommand && cli_help_subcommands[arg_subcommand][argv.subsubcommand]) {
-        console.log(cli_help_subcommands[arg_subcommand][argv.subsubcommand]);
+            arg_subsubcommand && cli_help_subcommands[arg_subcommand][arg_subsubcommand]) {
+        console.log(cli_help_subcommands[arg_subcommand][arg_subsubcommand]);
     }
     else if (arg_subcommand && cli_help_commands[arg_subcommand]) {
         console.log(cli_help_commands[arg_subcommand]);
@@ -348,8 +349,7 @@ function run_corpsec() {
 }
 function run_proforma() {
     return __awaiter(this, void 0, void 0, function () {
-        var apiRequest, e_3, e_4, e_5, e_6;
-        var _a, _b, _c;
+        var _a, _b, _c, apiRequest, e_3, e_4, e_5, e_6;
         return __generator(this, function (_d) {
             switch (_d.label) {
                 case 0:
@@ -373,6 +373,11 @@ function run_proforma() {
                     }
                     else {
                         apiRequest = _.fromPairs(_.map(apiRequest, function (dis) { return [dis.about[templateKey], dis.about.title]; }));
+                    }
+                    if (arg_subsubsubcommand
+                        &&
+                            _.get(apiRequest, arg_subsubsubcommand)) {
+                        apiRequest = _.get(apiRequest, arg_subsubsubcommand);
                     }
                     console.log(JSON.stringify(apiRequest, null, 2));
                     return [3 /*break*/, 4];
