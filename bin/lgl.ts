@@ -101,14 +101,14 @@ const cli_help_subcommands = {
 `,
         generate: `sub-subcommands for lgl proforma generate:
     key   STDIN should be JSON data; will fill a template
-    generate   key --filetype="docx"    save as Word docx file  (property: docDocx)
-    generate   key --filetype="pdf"     save as PDF file        (property: docPdf)
-    generate   key --filetype="pdf" --filename="myfilename" save as myfilename.pdf
 
-File content is base64-encoded, under a filetype-specific property.
-To extract, run something like:
+    generate   key  myfilename.docx  save as Word docx file
+    generate   key  docx             save as Word docx file, timestamped
 
-  $ lgl -t proforma generate hw3 < example.json | json docPdf | base64 -D > example.pdf
+    generate   key  myfilename.pdf   save as PDF file
+    generate   key  pdf              save as PDF file with timestamped filename
+
+  $ lgl -t proforma generate hw3 example.pdf < example.json
 `
     },
 }
@@ -135,8 +135,9 @@ const URI_BASE = (process.env.LGL_URI ? process.env.LGL_URI :
         ? `https://api.legalese.com/api/corpsec/v1.1`
         : `https://api.legalese.com/api/corpsec/v1.1`)
 
-const PROFORMA_FILETYPE = process.env.PROFORMA_FILETYPE || argv.filetype
+let PROFORMA_FILETYPE = process.env.PROFORMA_FILETYPE || argv.filetype
 
+console_error(`templateKey = ${templateKey}`);
 function console_error(str: string) {
     if (LGL_VERBOSE) { console.error(str) }
 }
@@ -417,18 +418,23 @@ async function run_corpsec() {
 interface Schemalist { about: { filepath?: string, templateKey?: string, title: string } } // this is a bit of a repeat; later, when we have full type definitions from schematemplates, shove it in from the actual Schemalist definition.
 
 async function run_proforma() {
-    // snarf STDIN as JSON
+  let apiRequest
 
-    let apiRequest
+  // for version 1.1 and above
+  let body = { email: config.email, user_id: config.user_id,
+               v01_api_key: LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key }
+  // for version 0.9 and 1.0
+  let profile_09 = { email: config.email, identities: [{user_id: config.user_id}]}
+  
+  //
+  // proforma schemalist
+  //
     if (arg_subcommand == "schemalist") {
-        try {
+      try {
             apiRequest = await rp({
                 method: 'POST', uri: URI_BASE + "/schemalist",
-                body: {
-                    email: config.email,
-                    user_id: config.user_id,
-                    v01_api_key: LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key
-                }, json: true
+              body: argv.version == "0.9" ? { profile: profile_09 } : body,
+              json: true
             })
 
             if (arg_subsubcommand) {
@@ -448,53 +454,75 @@ async function run_proforma() {
         }
         catch (e) { console.error(`lgl: error while calling API /schemalist`); console.error(e); process.exit(1); }
     }
+  //
+  // proforma schema
+  //
     else if (arg_subcommand == "schema") {
         if (!arg_subsubcommand) { console.log("lgl proforma schema <templateKey>"); process.exit(1) }
         try {
             apiRequest = await rp({
                 method: 'POST', uri: URI_BASE + "/schema",
-                body: {
-                    email: config.email,
-                    user_id: config.user_id,
-                    v01_api_key: LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key,
-                    [templateKey]: arg_subsubcommand
-                }, json: true
+              body: argv.version == "0.9" ? { profile: profile_09, [templateKey]: arg_subsubcommand } : { ...body, [templateKey]: arg_subsubcommand }
+              , json: true
             })
             console.log(JSON.stringify(apiRequest, null, 2))
         }
         catch (e) { console.error(`lgl: error while calling API /schema`); console.error(e); process.exit(1); }
     }
+  //
+  // proforma validate
+  //
     else if (arg_subcommand == "validate") {
         if (!arg_subsubcommand) { console.log("lgl proforma validate <templateKey>"); process.exit(1) }
         try {
             apiRequest = await rp({
                 method: 'POST', uri: URI_BASE + "/validate",
-                body: {
-                    email: config.email,
-                    user_id: config.user_id,
-                    v01_api_key: LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key,
-                    [templateKey]: arg_subsubcommand,
-                    data: JSON.parse(fs.readFileSync(0, 'utf-8'))
-                }, json: true
+              body: (argv.version == "0.9"
+                     ? { profile:profile_09, [templateKey]: arg_subsubcommand, data: JSON.parse(fs.readFileSync(0, 'utf-8')) }
+                     : { ...body,            [templateKey]: arg_subsubcommand, data: JSON.parse(fs.readFileSync(0, 'utf-8')) })
+                     , json: true
             })
             console.log(JSON.stringify(apiRequest, null, 2))
         }
         catch (e) { console.error(`lgl: error while calling API /validate`); console.error(e); process.exit(1); }
     }
+  //
+  // proforma generate
+  //
     else if (arg_subcommand == "generate") {
-        if (!arg_subsubcommand) { console.log("lgl proforma generate <templateKey>"); process.exit(1) }
+      if (!arg_subsubcommand) { console.log("lgl proforma generate <templateKey>"); process.exit(1) }
+      let output_filename = null
+      if (arg_subsubcommand && arg_subsubsubcommand) {
+        switch (arg_subsubsubcommand) {
+          case "pdf":  { PROFORMA_FILETYPE = "pdf";  output_filename = `${templateKey}-${Date.now()}.${PROFORMA_FILETYPE}`; break }
+          case "docx": { PROFORMA_FILETYPE = "docx"; output_filename = `${templateKey}-${Date.now()}.${PROFORMA_FILETYPE}`; break }
+          case null:   {                                                                                                    break }
+          default:     { if (/\.(docx|doc|pdf)$/i.test(arg_subsubsubcommand)) {
+            output_filename = arg_subsubsubcommand;
+            if (arg_subsubsubcommand.match(/\.pdf$/i))   { PROFORMA_FILETYPE = "pdf" }
+            if (arg_subsubsubcommand.match(/\.docx?$/i)) { PROFORMA_FILETYPE = "docx" }
+          } }
+        }
+      }
         try {
             apiRequest = await rp({
-                method: 'POST', uri: URI_BASE + "/generate",
-                body: {
-                    email: config.email,
-                    user_id: config.user_id,
-                    v01_api_key: LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key,
-                    [templateKey]: arg_subsubcommand,
-                    data: JSON.parse(fs.readFileSync(0, 'utf-8'))
-                }, json: true
+              method: 'POST', uri: URI_BASE + "/generate",
+              body: (argv.version == "0.9"
+                     ? { profile: profile_09, [templateKey]: arg_subsubcommand,
+                         contenttype: PROFORMA_FILETYPE,
+                         ...(JSON.parse(fs.readFileSync(0, 'utf-8'))) }
+                     : { email: config.email, user_id: config.user_id,
+                         v01_api_key: LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key,
+                         [templateKey]: arg_subsubcommand,
+                         contenttype: PROFORMA_FILETYPE,
+                         data: JSON.parse(fs.readFileSync(0, 'utf-8')) }
+                    ),
+              json: true
             })
+          if (output_filename) { writeToFile(apiRequest[PROFORMA_FILETYPE == "pdf" ? "docPdf" : "docDocx"], output_filename, PROFORMA_FILETYPE) }
+          else {
             console.log(JSON.stringify(apiRequest, null, 2))
+          }
         }
         catch (e) { console.error(`lgl: error while calling API /generate`); console.error(e); process.exit(1); }
 
@@ -544,16 +572,11 @@ function json_filename(candidate: string): string | null {
     }
 }
 
-function writeToFile(parsed: object, filename: string, filetype = 'pdf') {
-    console_error(`writing file ${filename}-${Date.now()}.${filetype}`)
+function writeToFile(parsed: string, filename: string, filetype = 'pdf') {
+    console_error(`lgl: saving to ${filename}`)
     switch (filetype) {
-        case 'json':
-            fs.writeFileSync(`${filename}-${Date.now()}.${filetype}`, JSON.stringify(parsed), 'utf-8')
-        case 'pdf':
-            fs.writeFileSync(`${filename}-${Date.now()}.${filetype}`, parsed, 'utf-8')
-        case 'docx':
-            fs.writeFileSync(`${filename}-${Date.now()}.${filetype}`, parsed, 'utf-8')
-        default:
-            return
+      case 'json': fs.writeFileSync(filename, JSON.stringify(parsed), 'utf-8'); break
+      case 'pdf':  
+      case 'docx': fs.writeFileSync(filename, parsed, 'base64')
     }
 }
