@@ -137,6 +137,7 @@ const URI_BASE = (process.env.LGL_URI ? process.env.LGL_URI :
 
 const PROFORMA_FILETYPE = process.env.PROFORMA_FILETYPE || argv.filetype
 
+console_error(`templateKey = ${templateKey}`);
 function console_error(str: string) {
     if (LGL_VERBOSE) { console.error(str) }
 }
@@ -420,15 +421,18 @@ async function run_proforma() {
     // snarf STDIN as JSON
 
     let apiRequest
+  let body = {
+    email: config.email,
+    user_id: config.user_id,
+    v01_api_key: LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key
+  }
+
     if (arg_subcommand == "schemalist") {
-        try {
+      try {
             apiRequest = await rp({
                 method: 'POST', uri: URI_BASE + "/schemalist",
-                body: {
-                    email: config.email,
-                    user_id: config.user_id,
-                    v01_api_key: LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key
-                }, json: true
+              body: argv.version == "0.9" ? { profile: body } : body,
+              json: true
             })
 
             if (arg_subsubcommand) {
@@ -453,12 +457,8 @@ async function run_proforma() {
         try {
             apiRequest = await rp({
                 method: 'POST', uri: URI_BASE + "/schema",
-                body: {
-                    email: config.email,
-                    user_id: config.user_id,
-                    v01_api_key: LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key,
-                    [templateKey]: arg_subsubcommand
-                }, json: true
+              body: argv.version == "0.9" ? { profile: body, [templateKey]: arg_subsubcommand } : { ...body, [templateKey]: arg_subsubcommand }
+              , json: true
             })
             console.log(JSON.stringify(apiRequest, null, 2))
         }

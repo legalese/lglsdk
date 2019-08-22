@@ -1,5 +1,16 @@
 #!/usr/bin/env node
 "use strict";
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
@@ -94,6 +105,7 @@ var URI_BASE = (process.env.LGL_URI ? process.env.LGL_URI :
         ? "https://api.legalese.com/api/corpsec/v1.1"
         : "https://api.legalese.com/api/corpsec/v1.1");
 var PROFORMA_FILETYPE = process.env.PROFORMA_FILETYPE || argv.filetype;
+console_error("templateKey = " + templateKey);
 function console_error(str) {
     if (LGL_VERBOSE) {
         console.error(str);
@@ -420,24 +432,26 @@ function run_corpsec() {
 }
 function run_proforma() {
     return __awaiter(this, void 0, void 0, function () {
-        var _a, _b, _c, apiRequest, e_5, e_6, e_7, e_8;
-        return __generator(this, function (_d) {
-            switch (_d.label) {
+        var _a, _b, _c, _d, apiRequest, body, e_5, e_6, e_7, e_8;
+        return __generator(this, function (_e) {
+            switch (_e.label) {
                 case 0:
+                    body = {
+                        email: config.email,
+                        user_id: config.user_id,
+                        v01_api_key: LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key
+                    };
                     if (!(arg_subcommand == "schemalist")) return [3 /*break*/, 5];
-                    _d.label = 1;
+                    _e.label = 1;
                 case 1:
-                    _d.trys.push([1, 3, , 4]);
+                    _e.trys.push([1, 3, , 4]);
                     return [4 /*yield*/, rp({
                             method: 'POST', uri: URI_BASE + "/schemalist",
-                            body: {
-                                email: config.email,
-                                user_id: config.user_id,
-                                v01_api_key: LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key
-                            }, json: true
+                            body: argv.version == "0.9" ? { profile: body } : body,
+                            json: true
                         })];
                 case 2:
-                    apiRequest = _d.sent();
+                    apiRequest = _e.sent();
                     if (arg_subsubcommand) {
                         // grep for this.about.templateKey == subsubcommand
                         apiRequest = _.filter(apiRequest, function (dis) { return dis.about[templateKey] == arg_subsubcommand; })[0];
@@ -453,7 +467,7 @@ function run_proforma() {
                     console.log(JSON.stringify(apiRequest, null, 2));
                     return [3 /*break*/, 4];
                 case 3:
-                    e_5 = _d.sent();
+                    e_5 = _e.sent();
                     console.error("lgl: error while calling API /schemalist");
                     console.error(e_5);
                     process.exit(1);
@@ -465,25 +479,20 @@ function run_proforma() {
                         console.log("lgl proforma schema <templateKey>");
                         process.exit(1);
                     }
-                    _d.label = 6;
+                    _e.label = 6;
                 case 6:
-                    _d.trys.push([6, 8, , 9]);
+                    _e.trys.push([6, 8, , 9]);
                     return [4 /*yield*/, rp({
                             method: 'POST', uri: URI_BASE + "/schema",
-                            body: (_a = {
-                                    email: config.email,
-                                    user_id: config.user_id,
-                                    v01_api_key: LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key
-                                },
-                                _a[templateKey] = arg_subsubcommand,
-                                _a), json: true
+                            body: argv.version == "0.9" ? (_a = { profile: body }, _a[templateKey] = arg_subsubcommand, _a) : __assign({}, body, (_b = {}, _b[templateKey] = arg_subsubcommand, _b)),
+                            json: true
                         })];
                 case 7:
-                    apiRequest = _d.sent();
+                    apiRequest = _e.sent();
                     console.log(JSON.stringify(apiRequest, null, 2));
                     return [3 /*break*/, 9];
                 case 8:
-                    e_6 = _d.sent();
+                    e_6 = _e.sent();
                     console.error("lgl: error while calling API /schema");
                     console.error(e_6);
                     process.exit(1);
@@ -495,26 +504,26 @@ function run_proforma() {
                         console.log("lgl proforma validate <templateKey>");
                         process.exit(1);
                     }
-                    _d.label = 11;
+                    _e.label = 11;
                 case 11:
-                    _d.trys.push([11, 13, , 14]);
+                    _e.trys.push([11, 13, , 14]);
                     return [4 /*yield*/, rp({
                             method: 'POST', uri: URI_BASE + "/validate",
-                            body: (_b = {
+                            body: (_c = {
                                     email: config.email,
                                     user_id: config.user_id,
                                     v01_api_key: LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key
                                 },
-                                _b[templateKey] = arg_subsubcommand,
-                                _b.data = JSON.parse(fs.readFileSync(0, 'utf-8')),
-                                _b), json: true
+                                _c[templateKey] = arg_subsubcommand,
+                                _c.data = JSON.parse(fs.readFileSync(0, 'utf-8')),
+                                _c), json: true
                         })];
                 case 12:
-                    apiRequest = _d.sent();
+                    apiRequest = _e.sent();
                     console.log(JSON.stringify(apiRequest, null, 2));
                     return [3 /*break*/, 14];
                 case 13:
-                    e_7 = _d.sent();
+                    e_7 = _e.sent();
                     console.error("lgl: error while calling API /validate");
                     console.error(e_7);
                     process.exit(1);
@@ -526,26 +535,26 @@ function run_proforma() {
                         console.log("lgl proforma generate <templateKey>");
                         process.exit(1);
                     }
-                    _d.label = 16;
+                    _e.label = 16;
                 case 16:
-                    _d.trys.push([16, 18, , 19]);
+                    _e.trys.push([16, 18, , 19]);
                     return [4 /*yield*/, rp({
                             method: 'POST', uri: URI_BASE + "/generate",
-                            body: (_c = {
+                            body: (_d = {
                                     email: config.email,
                                     user_id: config.user_id,
                                     v01_api_key: LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key
                                 },
-                                _c[templateKey] = arg_subsubcommand,
-                                _c.data = JSON.parse(fs.readFileSync(0, 'utf-8')),
-                                _c), json: true
+                                _d[templateKey] = arg_subsubcommand,
+                                _d.data = JSON.parse(fs.readFileSync(0, 'utf-8')),
+                                _d), json: true
                         })];
                 case 17:
-                    apiRequest = _d.sent();
+                    apiRequest = _e.sent();
                     console.log(JSON.stringify(apiRequest, null, 2));
                     return [3 /*break*/, 19];
                 case 18:
-                    e_8 = _d.sent();
+                    e_8 = _e.sent();
                     console.error("lgl: error while calling API /generate");
                     console.error(e_8);
                     process.exit(1);
