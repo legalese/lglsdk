@@ -115,11 +115,13 @@ To extract, run something like:
 
 var argv = require('minimist')(process.argv, {
     boolean: ["test", "t",
-        "verbose", "v", "vv",
-        "help", "h",
-        "version", // --version=0.9 send "filepath" instead of "templateKey", for the v0.9 and v1.0 APIs
-        "config"
-    ]
+              "verbose", "v", "vv",
+              "help","h",
+             ],
+  string: [
+    "version", // --version=0.9 send "filepath" instead of "templateKey", for the v0.9 and v1.0 APIs
+    "config"
+  ]
 });
 
 if (argv.help || argv.h) { argv._.splice(2, 0, "help") }

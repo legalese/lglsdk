@@ -77,6 +77,8 @@ var argv = require('minimist')(process.argv, {
     boolean: ["test", "t",
         "verbose", "v", "vv",
         "help", "h",
+    ],
+    string: [
         "version",
         "config"
     ]
