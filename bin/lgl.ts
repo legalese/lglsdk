@@ -407,7 +407,7 @@ async function run_corpsec() {
                 },
                 json: true
             })
-          console.log(JSON.stringify(apiRequest,null,2))
+          console.log(JSON.stringify(JSON.parse(apiRequest),null,2))
 
         } catch (e) { console.error(`lgl: error while calling API /bizfile`); console.error(e); process.exit(1); }
     }
