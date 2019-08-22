@@ -392,7 +392,7 @@ function run_corpsec() {
                 case 3:
                     e_3 = _a.sent();
                     console.error("lgl: error while calling API /bizfile");
-                    console.error(e_3.body);
+                    console.error(e_3);
                     process.exit(1);
                     return [3 /*break*/, 4];
                 case 4: return [3 /*break*/, 9];
@@ -417,12 +417,12 @@ function run_corpsec() {
                         })];
                 case 7:
                     apiRequest = _a.sent();
-                    console.log(JSON.parse(apiRequest));
+                    console.log(JSON.stringify(apiRequest, null, 2));
                     return [3 /*break*/, 9];
                 case 8:
                     e_4 = _a.sent();
                     console.error("lgl: error while calling API /bizfile");
-                    console.error(e_4.body);
+                    console.error(e_4);
                     process.exit(1);
                     return [3 /*break*/, 9];
                 case 9: return [2 /*return*/];

@@ -389,7 +389,7 @@ async function run_corpsec() {
             const mapped = _.flatMap(toreturn, u => { return { [u.uen]: u.entity_name } })
             console.log(mapped)
 
-        } catch (e) { console.error(`lgl: error while calling API /bizfile`); console.error(e.body); process.exit(1); }
+        } catch (e) { console.error(`lgl: error while calling API /bizfile`); console.error(e); process.exit(1); }
     }
     else if (arg_subcommand == 'uen') {
         const searchString = argv._.slice(4, argv.length).join(' ')
@@ -407,9 +407,9 @@ async function run_corpsec() {
                 },
                 json: true
             })
-            console.log(JSON.parse(apiRequest))
+          console.log(JSON.stringify(apiRequest,null,2))
 
-        } catch (e) { console.error(`lgl: error while calling API /bizfile`); console.error(e.body); process.exit(1); }
+        } catch (e) { console.error(`lgl: error while calling API /bizfile`); console.error(e); process.exit(1); }
     }
 }
 
