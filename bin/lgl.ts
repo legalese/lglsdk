@@ -72,7 +72,7 @@ const cli_help_commands = {
     run   lgl init --test
     to set up a test account with limited functionality.
 `,
-  login: `lgl login <email>
+    login: `lgl login <email>
     If you've accidentally lost your lglconfig.json file,
     you can repopulate it from the server by logging in with
     the email and password you previously set up.
@@ -93,10 +93,10 @@ const cli_help_subcommands = {
     schemalist key   extract the "example" property for subsequent use:
                    $ lgl proforma schemalist hw3 example > example.json
 `,
-      schema: `    schema     key   show the JSON schema for the expected input
+        schema: `    schema     key   show the JSON schema for the expected input
                    $ lgl proforma schema hw3
 `,
-      validate: `      validate   key   STDIN should be JSON data; will validate against the server.
+        validate: `      validate   key   STDIN should be JSON data; will validate against the server.
                    $ lgl -t proforma validate hw3 < example.json
 `,
         generate: `sub-subcommands for lgl proforma generate:
@@ -115,14 +115,14 @@ To extract, run something like:
 
 var argv = require('minimist')(process.argv, {
     boolean: ["test", "t",
-              "verbose", "v", "vv",
-              "help","h",
-              "version", // --version=0.9 send "filepath" instead of "templateKey", for the v0.9 and v1.0 APIs
-              "config"
-             ]
+        "verbose", "v", "vv",
+        "help", "h",
+        "version", // --version=0.9 send "filepath" instead of "templateKey", for the v0.9 and v1.0 APIs
+        "config"
+    ]
 });
 
-if (argv.help || argv.h) { argv._.splice(2,0,"help") }
+if (argv.help || argv.h) { argv._.splice(2, 0, "help") }
 
 let templateKey = (argv.version && argv.version == "0.9") ? "filepath" : "templateKey"
 
@@ -184,7 +184,7 @@ if (arg_command == "help") {
     }
 }
 else if (arg_command == "init") {
-  if (! LGL_TEST && ! arg_subcommand) { console.log(cli_help_commands[arg_command]); process.exit(1) }
+    if (!LGL_TEST && !arg_subcommand) { console.log(cli_help_commands[arg_command]); process.exit(1) }
     run_init("init")
 }
 else if (arg_command == "login") { // reinitialize
@@ -229,10 +229,10 @@ function check_config() {
 
 ///////////////////////////////////////////////////////////////////////////// init
 
-async function run_init(init_or_login : ("init" | "login") = "init" ) {
-  // usage: lgl init user@email.address
-  // we prompt for a password which we send to the server
-  //
+async function run_init(init_or_login: ("init" | "login") = "init") {
+    // usage: lgl init user@email.address
+    // we prompt for a password which we send to the server
+    //
     // the backend hands us one or more API keys
     // we save the API keys to lglconfig.json
     // give the end-user to an opportunity to verify their email address against auth0 by clicking the link
@@ -240,9 +240,9 @@ async function run_init(init_or_login : ("init" | "login") = "init" ) {
     // and the user_id corresponds to that email address.
 
     // if we already have a config file then refuse to init; ask them to delete.
-  // after running init we save to the config file
-  //
-  // do we also save the password they gave us, into the config file? no. if they forget the password, they have to run lgl forgot.
+    // after running init we save to the config file
+    //
+    // do we also save the password they gave us, into the config file? no. if they forget the password, they have to run lgl forgot.
 
     if (config_file && fs.existsSync(config_file)) {
         console.error(`lgl: init: config file ${config_file} already exists; refusing to init.
@@ -259,71 +259,71 @@ async function run_init(init_or_login : ("init" | "login") = "init" ) {
         console_error(`config_file is not defined! will proceed with ${config_file} in current directory.`);
     }
 
-  if (LGL_TEST) {
-    fs.writeFileSync(config_file, JSON.stringify(
-      {
-        "email": "demo-20190808@example.com",
-        "user_id": "5d4c03aa302f420cc73dcc05",
-        "v01_test_api_key": "f4571b7c-be77-11e9-b309-a72af58ab7fe",
-        "v01_live_api_key": "f4571b7c-be77-11e9-b309-a72af58ab7fe",
-      }
-      , null, 2) + "\n");
-    console.log(`You have set up a Legalese account with test credentials.
+    if (LGL_TEST) {
+        fs.writeFileSync(config_file, JSON.stringify(
+            {
+                "email": "demo-20190808@example.com",
+                "user_id": "5d4c03aa302f420cc73dcc05",
+                "v01_test_api_key": "f4571b7c-be77-11e9-b309-a72af58ab7fe",
+                "v01_live_api_key": "f4571b7c-be77-11e9-b309-a72af58ab7fe",
+            }
+            , null, 2) + "\n");
+        console.log(`You have set up a Legalese account with test credentials.
 Commands will work with limited functionality for demo purposes.
 When you are ready to use the system for real,
   rm lglconfig.json
   lgl init <email>
 `);
-    return;
-  }
-  else {
-    let prompt_pw
-    let api_response
-    let snark = true;
-    if (init_or_login == "init") {
-      prompt_pw = await prompts.prompt([{ type:'password', name:'pw1', message: "Enter new password: "},
-                                              { type:'password', name:'pw2', message: "Confirm password: "}]);
-      if (prompt_pw.pw1 != prompt_pw.pw2) { console.error("Passwords did not match. Please try again."); process.exit(1); }
-      setTimeout(() => { if (snark) { console.log("We appreciate your patience. This may be slow, but it's still faster than hiring a law firm.") } }, 1000)
-
-      try { api_response = await rp({ method: 'POST', uri: URI_BASE + "/users/create", body: { email: arg_subcommand, password: prompt_pw.pw1 }, json: true }) }
-      catch (e) { console.error(`lgl: error while calling API /create`); console.error(e); process.exit(1); }
-      console.log("Creating Legalese account...");
+        return;
     }
-    else { // init_or_login == "login"
-      prompt_pw = await prompts.prompt([{ type:'password', name:'pw1', message: "Enter lgl password: "}]);
-      try { api_response = await rp({ method: 'POST', uri: URI_BASE + "/users/create", body: { email: arg_subcommand, password: prompt_pw.pw1 }, json: true }) }
-      catch (e) { console.error(`lgl: error while calling API /create`); console.error(e); process.exit(1); }
-      console.log("Re-creating Legalese account...");
+    else {
+        let prompt_pw
+        let api_response
+        let snark = true;
+        if (init_or_login == "init") {
+            prompt_pw = await prompts.prompt([{ type: 'password', name: 'pw1', message: "Enter new password: " },
+            { type: 'password', name: 'pw2', message: "Confirm password: " }]);
+            if (prompt_pw.pw1 != prompt_pw.pw2) { console.error("Passwords did not match. Please try again."); process.exit(1); }
+            setTimeout(() => { if (snark) { console.log("We appreciate your patience. This may be slow, but it's still faster than hiring a law firm.") } }, 1000)
+
+            try { api_response = await rp({ method: 'POST', uri: URI_BASE + "/users/create", body: { email: arg_subcommand, password: prompt_pw.pw1 }, json: true }) }
+            catch (e) { console.error(`lgl: error while calling API /create`); console.error(e); process.exit(1); }
+            console.log("Creating Legalese account...");
+        }
+        else { // init_or_login == "login"
+            prompt_pw = await prompts.prompt([{ type: 'password', name: 'pw1', message: "Enter lgl password: " }]);
+            try { api_response = await rp({ method: 'POST', uri: URI_BASE + "/users/create", body: { email: arg_subcommand, password: prompt_pw.pw1 }, json: true }) }
+            catch (e) { console.error(`lgl: error while calling API /create`); console.error(e); process.exit(1); }
+            console.log("Re-creating Legalese account...");
+        }
+
+        snark = false;
+        if (api_response === null) { console.error("lgl: got null response from API; please try again later."); process.exit(1) }
+        if (api_response.api_error || api_response.response_defined == false) { console.error("lgl: got error from API:"); console.error(api_response.api_error + "\n"); process.exit(1) }
+
+        // if the user already exists according to auth0 but the user deleted their lglconfig.json
+        // and if the password doesn't match, the backend will refuse to create a new account.
+        // Instead we will get a 409. Then the user has to run lgl login instead.
+        // but if the password matches, we will make a cryptic remark to that effect.
+        if (api_response.remarks) { console.log(api_response.remarks) }
+
+        // https://auth0.com/docs/integrations/using-auth0-to-secure-a-cli
+        fs.writeFileSync(config_file, JSON.stringify({
+            "email": api_response.email,
+            "user_id": api_response.user_id, // this error doesn't stop compilation.
+            "v01_live_api_key": _.keys(api_response.app_metadata.v01_live_api_keys)[0],
+            "v01_test_api_key": _.keys(api_response.app_metadata.v01_test_api_keys)[0],
+        }, null, 2) + "\n");
     }
-
-    snark = false;
-    if (api_response === null) { console.error("lgl: got null response from API; please try again later."); process.exit(1) }
-    if (api_response.api_error || api_response.response_defined == false) { console.error("lgl: got error from API:"); console.error(api_response.api_error + "\n"); process.exit(1) }
-
-    // if the user already exists according to auth0 but the user deleted their lglconfig.json
-    // and if the password doesn't match, the backend will refuse to create a new account.
-    // Instead we will get a 409. Then the user has to run lgl login instead.
-    // but if the password matches, we will make a cryptic remark to that effect.
-    if (api_response.remarks) { console.log(api_response.remarks) }
-
-    // https://auth0.com/docs/integrations/using-auth0-to-secure-a-cli
-    fs.writeFileSync(config_file, JSON.stringify({
-      "email": api_response.email,
-      "user_id": api_response.user_id, // this error doesn't stop compilation.
-      "v01_live_api_key": _.keys(api_response.app_metadata.v01_live_api_keys)[0],
-      "v01_test_api_key": _.keys(api_response.app_metadata.v01_test_api_keys)[0],
-    }, null, 2) + "\n");
-  }
-  console.log(`You have created a Legalese account!
+    console.log(`You have created a Legalese account!
 To proceed, please confirm your email address.
 You should see a verification request in your Inbox.`)
-  if (/legalese\.com|gmail\.com/i.test(arg_subcommand)) {
-    // if we wanted to be really creepy
-    // we could look up the MX records for the domain
-    // to determine if it's hosted at Outlook, Yahoo, Gmail, or whatever
-    await open("https://www.gmail.com/")
-  }
+    if (/legalese\.com|gmail\.com/i.test(arg_subcommand)) {
+        // if we wanted to be really creepy
+        // we could look up the MX records for the domain
+        // to determine if it's hosted at Outlook, Yahoo, Gmail, or whatever
+        await open("https://www.gmail.com/")
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////// config
@@ -367,7 +367,47 @@ function run_demo() {
 
 ///////////////////////////////////////////////////////////////////////////// corpsec / bizfile
 
-function run_corpsec() {
+async function run_corpsec() {
+    let apiRequest
+    if (arg_subcommand == 'search') {
+        const searchString = argv._.slice(4, argv.length).join(' ')
+        console.log('searching for basic company details...')
+        console.log(searchString)
+        try {
+            apiRequest = await rp({
+                method: 'POST', uri: `${URI_BASE}/bizfile/search`,
+                body: {
+                    searchString: searchString,
+                    test: LGL_TEST ? true : false
+                },
+                json: true
+            })
+            const toreturn = JSON.parse(apiRequest)
+            const mapped = _.flatMap(toreturn, u => { return { [u.uen]: u.entity_name } })
+            console.log(mapped)
+
+        } catch (e) { console.error(`lgl: error while calling API /bizfile`); console.error(e.body); process.exit(1); }
+    }
+    else if (arg_subcommand == 'uen') {
+        const searchString = argv._.slice(4, argv.length).join(' ')
+        console.log('searching for company')
+        console.log(searchString)
+        try {
+            apiRequest = await rp({
+                method: 'POST', uri: `${URI_BASE}/bizfile/uen`,
+                body: {
+                    uen: searchString,
+                    test: LGL_TEST ? true : false,
+                    email: config.email,
+                    user_id: config.user_id,
+                    v01_api_key: LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key
+                },
+                json: true
+            })
+            console.log(JSON.stringify(apiRequest, null, 2))
+
+        } catch (e) { console.error(`lgl: error while calling API /bizfile`); console.error(e.body); process.exit(1); }
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////// proforma
@@ -389,25 +429,25 @@ async function run_proforma() {
                 }, json: true
             })
 
-          if (arg_subsubcommand) {
-            // grep for this.about.templateKey == subsubcommand
-            apiRequest = _.filter(apiRequest, dis=>dis.about[templateKey] == arg_subsubcommand)[0]
-          } else {
-            apiRequest = _.fromPairs(_.map(apiRequest, dis=>{return [dis.about[templateKey], dis.about.title]} ))
-          }
+            if (arg_subsubcommand) {
+                // grep for this.about.templateKey == subsubcommand
+                apiRequest = _.filter(apiRequest, dis => dis.about[templateKey] == arg_subsubcommand)[0]
+            } else {
+                apiRequest = _.fromPairs(_.map(apiRequest, dis => { return [dis.about[templateKey], dis.about.title] }))
+            }
 
-          if (arg_subsubsubcommand
-              &&
-              _.get(apiRequest, arg_subsubsubcommand)) {
-            apiRequest = _.get(apiRequest, arg_subsubsubcommand);
-          }
-          
-          console.log(JSON.stringify(apiRequest,null,2))
+            if (arg_subsubsubcommand
+                &&
+                _.get(apiRequest, arg_subsubsubcommand)) {
+                apiRequest = _.get(apiRequest, arg_subsubsubcommand);
+            }
+
+            console.log(JSON.stringify(apiRequest, null, 2))
         }
         catch (e) { console.error(`lgl: error while calling API /schemalist`); console.error(e); process.exit(1); }
     }
     else if (arg_subcommand == "schema") {
-    if (! arg_subsubcommand) { console.log("lgl proforma schema <templateKey>"); process.exit(1) }
+        if (!arg_subsubcommand) { console.log("lgl proforma schema <templateKey>"); process.exit(1) }
         try {
             apiRequest = await rp({
                 method: 'POST', uri: URI_BASE + "/schema",
@@ -415,44 +455,44 @@ async function run_proforma() {
                     email: config.email,
                     user_id: config.user_id,
                     v01_api_key: LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key,
-		    [templateKey]: arg_subsubcommand
+                    [templateKey]: arg_subsubcommand
                 }, json: true
             })
-          console.log(JSON.stringify(apiRequest,null,2))
+            console.log(JSON.stringify(apiRequest, null, 2))
         }
         catch (e) { console.error(`lgl: error while calling API /schema`); console.error(e); process.exit(1); }
     }
-  else if (arg_subcommand == "validate") {
-    if (! arg_subsubcommand) { console.log("lgl proforma validate <templateKey>"); process.exit(1) }
-	try {
-	  apiRequest = await rp({
+    else if (arg_subcommand == "validate") {
+        if (!arg_subsubcommand) { console.log("lgl proforma validate <templateKey>"); process.exit(1) }
+        try {
+            apiRequest = await rp({
                 method: 'POST', uri: URI_BASE + "/validate",
                 body: {
                     email: config.email,
                     user_id: config.user_id,
                     v01_api_key: LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key,
-		    [templateKey]: arg_subsubcommand,
-		  data: JSON.parse(fs.readFileSync(0,'utf-8'))
+                    [templateKey]: arg_subsubcommand,
+                    data: JSON.parse(fs.readFileSync(0, 'utf-8'))
                 }, json: true
             })
-          console.log(JSON.stringify(apiRequest,null,2))
+            console.log(JSON.stringify(apiRequest, null, 2))
         }
         catch (e) { console.error(`lgl: error while calling API /validate`); console.error(e); process.exit(1); }
     }
     else if (arg_subcommand == "generate") {
-    if (! arg_subsubcommand) { console.log("lgl proforma generate <templateKey>"); process.exit(1) }
-	try {
-	    apiRequest = await rp({
+        if (!arg_subsubcommand) { console.log("lgl proforma generate <templateKey>"); process.exit(1) }
+        try {
+            apiRequest = await rp({
                 method: 'POST', uri: URI_BASE + "/generate",
                 body: {
                     email: config.email,
                     user_id: config.user_id,
                     v01_api_key: LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key,
-		    [templateKey]: arg_subsubcommand,
-		  data: JSON.parse(fs.readFileSync(0,'utf-8'))
+                    [templateKey]: arg_subsubcommand,
+                    data: JSON.parse(fs.readFileSync(0, 'utf-8'))
                 }, json: true
             })
-	    console.log(JSON.stringify(apiRequest, null, 2))
+            console.log(JSON.stringify(apiRequest, null, 2))
         }
         catch (e) { console.error(`lgl: error while calling API /generate`); console.error(e); process.exit(1); }
 

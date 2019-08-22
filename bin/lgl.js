@@ -346,10 +346,79 @@ function run_demo() {
 }
 ///////////////////////////////////////////////////////////////////////////// corpsec / bizfile
 function run_corpsec() {
+    return __awaiter(this, void 0, void 0, function () {
+        var apiRequest, searchString, toreturn, mapped, e_3, searchString, e_4;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    if (!(arg_subcommand == 'search')) return [3 /*break*/, 5];
+                    searchString = argv._.slice(4, argv.length).join(' ');
+                    console.log('searching for basic company details...');
+                    console.log(searchString);
+                    _a.label = 1;
+                case 1:
+                    _a.trys.push([1, 3, , 4]);
+                    return [4 /*yield*/, rp({
+                            method: 'POST', uri: URI_BASE + "/bizfile/search",
+                            body: {
+                                searchString: searchString,
+                                test: LGL_TEST ? true : false
+                            },
+                            json: true
+                        })];
+                case 2:
+                    apiRequest = _a.sent();
+                    toreturn = JSON.parse(apiRequest);
+                    mapped = _.flatMap(toreturn, function (u) {
+                        var _a;
+                        return _a = {}, _a[u.uen] = u.entity_name, _a;
+                    });
+                    console.log(mapped);
+                    return [3 /*break*/, 4];
+                case 3:
+                    e_3 = _a.sent();
+                    console.error("lgl: error while calling API /bizfile");
+                    console.error(e_3.body);
+                    process.exit(1);
+                    return [3 /*break*/, 4];
+                case 4: return [3 /*break*/, 9];
+                case 5:
+                    if (!(arg_subcommand == 'uen')) return [3 /*break*/, 9];
+                    searchString = argv._.slice(4, argv.length).join(' ');
+                    console.log('searching for company');
+                    console.log(searchString);
+                    _a.label = 6;
+                case 6:
+                    _a.trys.push([6, 8, , 9]);
+                    return [4 /*yield*/, rp({
+                            method: 'POST', uri: URI_BASE + "/bizfile/uen",
+                            body: {
+                                uen: searchString,
+                                test: LGL_TEST ? true : false,
+                                email: config.email,
+                                user_id: config.user_id,
+                                v01_api_key: LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key
+                            },
+                            json: true
+                        })];
+                case 7:
+                    apiRequest = _a.sent();
+                    console.log(JSON.stringify(apiRequest, null, 2));
+                    return [3 /*break*/, 9];
+                case 8:
+                    e_4 = _a.sent();
+                    console.error("lgl: error while calling API /bizfile");
+                    console.error(e_4.body);
+                    process.exit(1);
+                    return [3 /*break*/, 9];
+                case 9: return [2 /*return*/];
+            }
+        });
+    });
 }
 function run_proforma() {
     return __awaiter(this, void 0, void 0, function () {
-        var _a, _b, _c, apiRequest, e_3, e_4, e_5, e_6;
+        var _a, _b, _c, apiRequest, e_5, e_6, e_7, e_8;
         return __generator(this, function (_d) {
             switch (_d.label) {
                 case 0:
@@ -382,9 +451,9 @@ function run_proforma() {
                     console.log(JSON.stringify(apiRequest, null, 2));
                     return [3 /*break*/, 4];
                 case 3:
-                    e_3 = _d.sent();
+                    e_5 = _d.sent();
                     console.error("lgl: error while calling API /schemalist");
-                    console.error(e_3);
+                    console.error(e_5);
                     process.exit(1);
                     return [3 /*break*/, 4];
                 case 4: return [3 /*break*/, 19];
@@ -412,9 +481,9 @@ function run_proforma() {
                     console.log(JSON.stringify(apiRequest, null, 2));
                     return [3 /*break*/, 9];
                 case 8:
-                    e_4 = _d.sent();
+                    e_6 = _d.sent();
                     console.error("lgl: error while calling API /schema");
-                    console.error(e_4);
+                    console.error(e_6);
                     process.exit(1);
                     return [3 /*break*/, 9];
                 case 9: return [3 /*break*/, 19];
@@ -443,9 +512,9 @@ function run_proforma() {
                     console.log(JSON.stringify(apiRequest, null, 2));
                     return [3 /*break*/, 14];
                 case 13:
-                    e_5 = _d.sent();
+                    e_7 = _d.sent();
                     console.error("lgl: error while calling API /validate");
-                    console.error(e_5);
+                    console.error(e_7);
                     process.exit(1);
                     return [3 /*break*/, 14];
                 case 14: return [3 /*break*/, 19];
@@ -474,9 +543,9 @@ function run_proforma() {
                     console.log(JSON.stringify(apiRequest, null, 2));
                     return [3 /*break*/, 19];
                 case 18:
-                    e_6 = _d.sent();
+                    e_8 = _d.sent();
                     console.error("lgl: error while calling API /generate");
-                    console.error(e_6);
+                    console.error(e_8);
                     process.exit(1);
                     return [3 /*break*/, 19];
                 case 19: return [2 /*return*/];
