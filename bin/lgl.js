@@ -436,9 +436,15 @@ function run_proforma() {
         return __generator(this, function (_g) {
             switch (_g.label) {
                 case 0:
-                    body = { email: config.email, user_id: config.user_id,
-                        v01_api_key: LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key };
-                    profile_09 = { email: config.email, identities: [{ user_id: config.user_id }] };
+                    body = {
+                        email: config.email, user_id: config.user_id,
+                        v01_api_key: LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key
+                    };
+                    profile_09 = {
+                        email: config.email,
+                        identities: [{ user_id: config.user_id }],
+                        v01_api_key: LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key
+                    };
                     if (!(arg_subcommand == "schemalist")) return [3 /*break*/, 5];
                     _g.label = 1;
                 case 1:
@@ -563,8 +569,14 @@ function run_proforma() {
                     return [4 /*yield*/, rp({
                             method: 'POST', uri: URI_BASE + "/generate",
                             body: (argv.version == "0.9"
-                                ? __assign((_e = { profile: profile_09 }, _e[templateKey] = arg_subsubcommand, _e.contenttype = PROFORMA_FILETYPE, _e), (JSON.parse(fs.readFileSync(0, 'utf-8')))) : (_f = { email: config.email, user_id: config.user_id,
-                                    v01_api_key: LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key }, _f[templateKey] = arg_subsubcommand, _f.contenttype = PROFORMA_FILETYPE, _f.data = JSON.parse(fs.readFileSync(0, 'utf-8')), _f)),
+                                ? __assign((_e = { profile: profile_09 }, _e[templateKey] = arg_subsubcommand, _e.contenttype = PROFORMA_FILETYPE, _e), (JSON.parse(fs.readFileSync(0, 'utf-8')))) : (_f = {
+                                    email: config.email, user_id: config.user_id,
+                                    v01_api_key: LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key
+                                },
+                                _f[templateKey] = arg_subsubcommand,
+                                _f.contenttype = PROFORMA_FILETYPE,
+                                _f.data = JSON.parse(fs.readFileSync(0, 'utf-8')),
+                                _f)),
                             json: true
                         })];
                 case 17:
