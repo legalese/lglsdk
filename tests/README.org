@@ -1,0 +1,27 @@
+#+TITLE: LGL SDK TESTS
+
+* Testing the lgl executable
+
+The test suite runs the lgl executable against given command-line parameters and STDIN inputs. The STDOUT from the executable is compared against known expectations.
+
+* Testing the library
+
+The test suite directly calls the library functions exposed by the SDK. Most of those library functions map to back-end endpoints. The output of those function calls is compared against known expectations.
+
+* Components
+
+** Account Creation
+
+** Bizfile
+
+** Proforma
+
+** Workflow
+
+** Payment
+
+* Testing the endpoints
+
+The server-side API endpoints are implicitly tested as part of the tests of the library and lgl executable.
+
+In future, we could do curl-based testing if an independent channel of coverage is desired.
