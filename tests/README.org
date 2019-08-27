@@ -4,6 +4,101 @@
 
 The test suite runs the lgl executable against given command-line parameters and STDIN inputs. The STDOUT from the executable is compared against known expectations.
 
+#+NAME: lgltest-setup
+#+BEGIN_SRC sh
+testdir=tests/test-`date +%Y%m%d-%H%M%S`
+mkdir -p $testdir
+cd $testdir
+export LGL_URI=http://localhost/api/corpsec/v1.1
+#+END_SRC
+
+** The Tests
+
+*** schemalist
+
+#+NAME: schemalist
+#+BEGIN_SRC sh :noweb yes :exports results :results verbatim :tangle schemalist.expected
+<<proforma(myargs="schemalist")>>
+#+END_SRC
+
+#+RESULTS: schemalist
+: {
+:   "example1a": "Example Template One Alpha",
+:   "example1b": "Example Template One Beta",
+:   "example1c": "Example Template One C",
+:   "example1d": "Example Template One D",
+:   "example1e": "Example Template One E",
+:   "example1f": "Example Template One F",
+:   "hw3": "Hello World 3"
+: }
+
+*** help
+
+lgl --help
+lgl -t init --config=lglconfig.json
+lgl proforma schemalist
+lgl proforma schemalist hw3
+lgl proforma schemalist hw3 example
+lgl proforma schema hw3
+
+A bit of Perl captures the output of each test to *.out and *.err.
+
+#+NAME: proforma
+#+BEGIN_SRC python :noweb yes :exports results :results output :var myargs="help" num=0
+print('lgl --config=../lglconfig-demotest.json proforma %s 2>&1' % (myargs))
+#+END_SRC
+
+#+RESULTS: lglrun
+: lgl --config=../lglconfig-demotest.json help 2>&1
+
+#+NAME: capture
+#+BEGIN_SRC python :noweb yes :exports results :results output :var myargs="noargs" num=0
+print('lgl --config=../lglconfig-demotest.json %s %02d.out 2> %02d.err' % (myargs, num, num))
+#+END_SRC
+
+#+RESULTS: capture
+: lgl --config=../lglconfig-demotest.json noargs > 00.out 2> 00.err
+
+#+RESULTS: lgl-capture
+: lgl > 01.out 2> 01.err
+: lgl --help > 02.out 2> 02.err
+: lgl -t init --config=lglconfig.json > 03.out 2> 03.err
+: lgl proforma schemalist > 04.out 2> 04.err
+: lgl proforma schemalist hw3 > 05.out 2> 05.err
+: lgl proforma schemalist hw3 example > 06.out 2> 06.err
+
+The actual test script combines all of the above.
+
+#+NAME: lgltest
+#+BEGIN_SRC sh :noweb yes :tangle lgltest.sh :shebang #!/bin/bash
+  <<lgltest-setup>>
+  <<capture(opts="foo",num=4)>>
+#+END_SRC
+
+#+RESULTS: lgltest
+
+After running the tests, we compare to see if the output of the tests match the expectations.
+
+** lgl proforma schemalist
+
+#+NAME: proforma schemalist
+#+BEGIN_SRC sh :noweb yes :results verbatim
+proforma schemalist
+#+END_SRC
+
+#+RESULTS: proforma schemalist
+: {
+:   "example1a": "Example Template One Alpha",
+:   "example1b": "Example Template One Beta",
+:   "example1c": "Example Template One C",
+:   "example1d": "Example Template One D",
+:   "example1e": "Example Template One E",
+:   "example1f": "Example Template One F",
+:   "hw3": "Hello World 3"
+: }
+
+
+
 * Testing the library
 
 The test suite directly calls the library functions exposed by the SDK. Most of those library functions map to back-end endpoints. The output of those function calls is compared against known expectations.
