@@ -158,6 +158,7 @@ console_error(argv);
 
 let config_file: string | null
 config_file = json_filename(argv.config || "lglconfig.json")
+console_error(`identified config_file as ${config_file}`)
 
 interface Config {
     email?: string;
@@ -225,7 +226,7 @@ function check_config() {
     }
 
     if (!config.user_id) {
-        console.error("lgl: can't load config file; system has not been initialized. run lgl init");
+        console.error("lgl: can't load config file; system has not been initialized; no user_id. run lgl init");
         process.exit(2);
     }
 }
@@ -575,13 +576,23 @@ function load_json(filename: string): object | undefined {
 }
 
 function json_filename(candidate: string): string | null {
-    var found = findUp.sync(candidate)
-    if (found) {
-        // consider searching up the path, the way tsconfig.json does
-        return found
-    } else {
-        return null // https://medium.com/@hinchman_amanda/null-pointer-references-the-billion-dollar-mistake-1e616534d485
+  // if user explicitly runs --config=somefile.json, don't findUp; expect the config path to specify the file exactly
+  if (argv.config) {
+    console_error(`json_filename: argv.config seems to be true`)
+    if (fs.existsSync(argv.config)) {
+      return argv.config
     }
+    else {
+      return null
+    }
+  }    
+  var found = findUp.sync(candidate)
+  if (found) {
+    // consider searching up the path, the way tsconfig.json does
+    return found
+  } else {
+    return null // https://medium.com/@hinchman_amanda/null-pointer-references-the-billion-dollar-mistake-1e616534d485
+  }
 }
 
 function writeToFile(parsed: string, filename: string, filetype = 'pdf') {

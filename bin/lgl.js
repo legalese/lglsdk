@@ -125,6 +125,7 @@ var arg_subsubsubcommand = argv._[5];
 console_error(argv);
 var config_file;
 config_file = json_filename(argv.config || "lglconfig.json");
+console_error("identified config_file as " + config_file);
 var config;
 if (config_file != undefined) {
     config = load_json(config_file);
@@ -186,7 +187,7 @@ function check_config() {
         process.exit(1);
     }
     if (!config.user_id) {
-        console.error("lgl: can't load config file; system has not been initialized. run lgl init");
+        console.error("lgl: can't load config file; system has not been initialized; no user_id. run lgl init");
         process.exit(2);
     }
 }
@@ -626,6 +627,16 @@ function load_json(filename) {
     return config;
 }
 function json_filename(candidate) {
+    // if user explicitly runs --config=somefile.json, don't findUp; expect the config path to specify the file exactly
+    if (argv.config) {
+        console_error("json_filename: argv.config seems to be true");
+        if (fs.existsSync(argv.config)) {
+            return argv.config;
+        }
+        else {
+            return null;
+        }
+    }
     var found = findUp.sync(candidate);
     if (found) {
         // consider searching up the path, the way tsconfig.json does
