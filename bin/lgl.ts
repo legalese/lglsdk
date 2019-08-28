@@ -214,6 +214,10 @@ else if (arg_command == "query") {
     check_config();
     run_query()
 }
+else if (arg_command == "workflow") {
+    check_config();
+    run_workflow()
+}
 else {
     console.error(cli_help);
 }
@@ -407,7 +411,7 @@ async function run_corpsec() {
                 },
                 json: true
             })
-            console.log(JSON.stringify(JSON.parse(apiRequest), null, 2))
+            console.log(apiRequest)
 
         } catch (e) { console.error(`lgl: error while calling API /bizfile`); console.error(e); process.exit(1); }
     }
@@ -545,6 +549,27 @@ async function run_proforma() {
     // | json example
     // | time json -e 'this.templateKey="hw3"; this.contenttype="docx"; this.profile={"email":"e", "identities":[{"user_id": "ui"}]}'
     // | curl -s -H 'Content-Type: application/json' -d@- https://legalese.com/api/corpsec/v1.0/schema | json
+}
+
+///////////////////////////////////////////////////////////////////////////// workflow
+
+async function run_workflow() {
+    let apiRequest
+    try {
+        apiRequest = await rp({
+            method: 'POST', uri: URI_BASE + `/workflow/${arg_subcommand}`,
+            body: {
+		email: config.email,
+		user_id: config.user_id,
+		v01_api_key: LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key,
+		data: JSON.parse(fs.readFileSync(0, 'utf-8'))
+	    },
+            json: true
+        })
+
+        console.log(JSON.stringify(apiRequest, null, 2))
+    }
+    catch (e) { console.error(`lgl: error while calling API /schemalist`); console.error(e); process.exit(1); }
 }
 
 ///////////////////////////////////////////////////////////////////////////// query
