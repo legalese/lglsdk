@@ -5,8 +5,8 @@
 The test suite runs the lgl executable against given command-line parameters and STDIN inputs. The STDOUT from the executable is compared against known expectations.
 
 #+NAME: lgltest-setup
-#+BEGIN_SRC sh
-testdir=tests/test-`date +%Y%m%d-%H%M%S`
+#+BEGIN_SRC sh :shebang #!/bin/bash :tangle lgltests.sh
+testdir=testruns/`date +%Y%m%d-%H%M%S`
 mkdir -p $testdir
 cd $testdir
 export LGL_URI=http://localhost/api/corpsec/v1.1
@@ -14,11 +14,71 @@ export LGL_URI=http://localhost/api/corpsec/v1.1
 
 ** The Tests
 
-*** schemalist
+*** -t init
+
+#+NAME: init
+#+BEGIN_SRC sh :noweb yes :exports results :results verbatim
+<<lgl(myargs="-t init")>>
+#+END_SRC
+
+#+RESULTS: init
+: You have set up a Legalese account with test credentials.
+: Those credentials have been saved to lglconfig.json
+: Commands will work with limited functionality for demo purposes.
+: When you are ready to use the system for real,
+:   rm lglconfig.json
+:   lgl init <email>
+: 
+
+#+NAME: capture init
+#+BEGIN_SRC sh :noweb yes :exports results :results verbatim :tangle lgltests.sh :eval no
+<<mkCapture(myargs="init -t")>>
+#+END_SRC
+
+*** help
+
+#+NAME: help
+#+BEGIN_SRC sh :noweb yes :exports results :results verbatim
+<<lgl(myargs="help")>>
+#+END_SRC
+
+#+RESULTS: help
+#+begin_example
+usage: lgl [help] command subcommand ...
+commands:
+    help [command]          view more details about command
+    init                    initialize account
+    demo                    walks you through key functionality
+    bizfile / corpsec       retrieves company details from government backends
+    proforma                creates paperwork from templates, filled with JSON parameters
+
+    login                   reinitialize account if lglconfig.json has gone missing
+    config                  manipulate lglconfig.json. Or you could just edit it yourself.
+
+options:
+    --test                  all commands will run in test mode against the dev sandbox
+    --verbose               verbose logging
+    --world=some.json       load environment context from some.json file
+    --config=conf.json      load configuration from conf.json instead of default ./lglconfig.json
+
+environment variables:
+    LGL_VERBOSE   set to truthy to get more verbosity
+
+
+try: lgl help demo
+
+#+end_example
+
+#+NAME: capture help
+#+BEGIN_SRC sh :noweb yes :exports results :results verbatim :tangle lgltests.sh :eval no
+<<mkCapture(myargs="help")>>
+#+END_SRC
+
+*** proforma schemalist
 
 #+NAME: schemalist
-#+BEGIN_SRC sh :noweb yes :exports results :results verbatim :tangle schemalist.expected
-<<proforma(myargs="schemalist")>>
+#+BEGIN_SRC sh :noweb yes :exports results :results verbatim
+<<lgl(myargs="proforma schemalist")>>
 #+END_SRC
 
 #+RESULTS: schemalist
@@ -32,71 +92,365 @@ export LGL_URI=http://localhost/api/corpsec/v1.1
 :   "hw3": "Hello World 3"
 : }
 
-*** help
+#+NAME: capture schemalist
+#+BEGIN_SRC sh :noweb yes :exports results :results verbatim :tangle lgltests.sh :eval no
+<<mkCapture(myargs="proforma schemalist")>>
+#+END_SRC
 
-lgl --help
-lgl -t init --config=lglconfig.json
-lgl proforma schemalist
-lgl proforma schemalist hw3
-lgl proforma schemalist hw3 example
-lgl proforma schema hw3
+*** proforma schemalist hw3
 
-A bit of Perl captures the output of each test to *.out and *.err.
+#+NAME: schemalist_hw3
+#+BEGIN_SRC sh :noweb yes :exports results :results verbatim
+<<lgl(myargs="proforma schemalist hw3")>>
+#+END_SRC
 
-#+NAME: proforma
+#+RESULTS: schemalist hw3
+#+begin_example
+{
+  "about": {
+    "title": "Hello World 3",
+    "templateVersion": "1.0.0",
+    "prerequisites": [],
+    "show_in_development": true,
+    "show_in_production": true,
+    "filepath": "hw3",
+    "templateKey": "hw3"
+  },
+  "example": {
+    "company": {
+      "fullName": "My Unicorn Pte. Ltd.",
+      "id": {
+        "idtype": "UEN",
+        "idvalue": "204000000X"
+      },
+      "nationality": "SG",
+      "address": {
+        "lines": [
+          "71 Ayer Rajah Crescent",
+          "#00-00"
+        ],
+        "postcode": "139951"
+      }
+    },
+    "directors": [
+      {
+        "fullName": "Alice",
+        "id": {
+          "idtype": "NRIC",
+          "idvalue": "S1111111A"
+        },
+        "nationality": "SG",
+        "address": {
+          "lines": [
+            "0 Sentosa Cove"
+          ],
+          "postcode": "111111"
+        }
+      },
+      {
+        "fullName": "Bob",
+        "id": {
+          "idtype": "NRIC",
+          "idvalue": "S2222222X"
+        },
+        "nationality": "SG",
+        "address": {
+          "lines": [
+            "0 Changi Way",
+            "#00-00"
+          ],
+          "postcode": "222222"
+        }
+      }
+    ]
+  }
+}
+#+end_example
+
+#+NAME: capture schemalist hw3
+#+BEGIN_SRC sh :noweb yes :exports results :results verbatim :tangle lgltests.sh :eval no
+<<mkCapture(myargs="proforma schemalist hw3")>>
+#+END_SRC
+
+#+RESULTS: capture schemalist hw3
+
+*** proforma schemalist hw3 example
+
+#+NAME: schemalist_hw3_example
+#+BEGIN_SRC sh :noweb yes :exports results :results verbatim
+<<lgl(myargs="proforma schemalist hw3 example")>>
+#+END_SRC
+
+#+RESULTS: schemalist_hw3_example
+#+begin_example
+{
+  "company": {
+    "fullName": "My Unicorn Pte. Ltd.",
+    "id": {
+      "idtype": "UEN",
+      "idvalue": "204000000X"
+    },
+    "nationality": "SG",
+    "address": {
+      "lines": [
+        "71 Ayer Rajah Crescent",
+        "#00-00"
+      ],
+      "postcode": "139951"
+    }
+  },
+  "directors": [
+    {
+      "fullName": "Alice",
+      "id": {
+        "idtype": "NRIC",
+        "idvalue": "S1111111A"
+      },
+      "nationality": "SG",
+      "address": {
+        "lines": [
+          "0 Sentosa Cove"
+        ],
+        "postcode": "111111"
+      }
+    },
+    {
+      "fullName": "Bob",
+      "id": {
+        "idtype": "NRIC",
+        "idvalue": "S2222222X"
+      },
+      "nationality": "SG",
+      "address": {
+        "lines": [
+          "0 Changi Way",
+          "#00-00"
+        ],
+        "postcode": "222222"
+      }
+    }
+  ]
+}
+#+end_example
+
+#+NAME: capture schemalist hw3 example
+#+BEGIN_SRC sh :noweb yes :exports code :results verbatim :tangle lgltests.sh :eval no
+<<mkCapture(myargs="proforma schemalist hw3 example")>>
+#+END_SRC
+
+*** proforma schema hw3
+
+#+NAME: schema_hw3
+#+BEGIN_SRC sh :noweb yes :exports results :results verbatim
+<<lgl(myargs="proforma schema hw3")>>
+#+END_SRC
+
+#+RESULTS: schema_hw3
+#+begin_example
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "Address_SG": {
+      "classNames": "no-left-pad",
+      "properties": {
+        "lines": {
+          "classNames": "no-left-pad",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "New Address Line",
+          "type": "array",
+          "ui:noTitle": true
+        },
+        "postcode": {
+          "$ref": "#/definitions/Address_SG_Postcode"
+        }
+      },
+      "title": "Address",
+      "type": "object",
+      "ui:arrayProminence": "minor",
+      "ui:order": [
+        "lines",
+        "postcode",
+        "*"
+      ]
+    },
+    "Address_SG_Postcode": {
+      "classNames": "col-xs-4 no-left-pad",
+      "title": "Singapore Post Code",
+      "type": "string"
+    },
+    "Corporation_SG": {
+      "description": "Add a new company here.",
+      "properties": {
+        "address": {
+          "$ref": "#/definitions/Address_SG"
+        },
+        "date_of_incorporation": {
+          "title": "Date of Incorporation",
+          "type": "string"
+        },
+        "fullName": {
+          "title": "Name",
+          "type": "string"
+        },
+        "id": {
+          "$ref": "#/definitions/ID_SG_Corporate"
+        },
+        "nationality": {
+          "$ref": "#/definitions/Country"
+        }
+      },
+      "title": "Your Company ",
+      "type": "object"
+    },
+    "Country": {
+      "title": "Country Code (two characters)",
+      "type": "string"
+    },
+    "ID_NRIC": {
+      "properties": {
+        "idtype": {
+          "title": "ID Type",
+          "type": "string"
+        },
+        "idvalue": {
+          "title": "ID Value",
+          "type": "string"
+        }
+      },
+      "title": "Singapore NRIC",
+      "type": "object"
+    },
+    "ID_Passport": {
+      "properties": {
+        "country": {
+          "$ref": "#/definitions/Country"
+        },
+        "idtype": {
+          "title": "ID Type",
+          "type": "string"
+        },
+        "idvalue": {
+          "title": "ID Value",
+          "type": "string"
+        }
+      },
+      "title": "International Passport",
+      "type": "object"
+    },
+    "ID_SG_Corporate": {
+      "properties": {
+        "idtype": {
+          "title": "ID Type",
+          "type": "string",
+          "ui:howmanydigits": "nine"
+        },
+        "idvalue": {
+          "title": "ID Value",
+          "type": "string"
+        }
+      },
+      "title": "UEN",
+      "type": "object"
+    },
+    "ID_SG_Natural": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/ID_Passport"
+        },
+        {
+          "$ref": "#/definitions/ID_NRIC"
+        }
+      ]
+    },
+    "Natural_Person_SG": {
+      "properties": {
+        "address": {
+          "$ref": "#/definitions/Address_SG"
+        },
+        "fullName": {
+          "title": "Name",
+          "type": "string"
+        },
+        "id": {
+          "$ref": "#/definitions/ID_SG_Natural",
+          "title": "ID"
+        },
+        "nationality": {
+          "$ref": "#/definitions/Country"
+        }
+      },
+      "title": "A Natural Person",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "company": {
+      "$ref": "#/definitions/Corporation_SG"
+    },
+    "directors": {
+      "items": {
+        "$ref": "#/definitions/Natural_Person_SG"
+      },
+      "minItems": 1,
+      "title": "Directors",
+      "type": "array"
+    }
+  }
+}
+#+end_example
+
+#+NAME: capture schema_hw3
+#+BEGIN_SRC sh :noweb yes :exports results :results verbatim :tangle lgltests.sh :eval no
+<<mkCapture(myargs="proforma schema hw3")>>
+#+END_SRC
+
+*** bizfile search prive
+
+#+NAME: bizfile_search_sandbox
+#+BEGIN_SRC sh :noweb yes :exports results :results verbatim
+<<lgl(myargs="bizfile search prive")>>
+#+END_SRC
+
+#+NAME: capture bizfile_search_sandbox
+#+BEGIN_SRC sh :noweb yes :exports results :results verbatim :tangle lgltests.sh :eval no
+<<mkCapture(myargs="bizfile search prive")>>
+#+END_SRC
+
+*** bizfile uen jkl
+
+JKL Technologies is a fictitious ACRA APImall Sandbox company that doesn't get billed.
+
+#+NAME: bizfile_search_sandbox
+#+BEGIN_SRC sh :noweb yes :exports results :results verbatim
+<<lgl(myargs="bizfile uen 111111111M")>>
+#+END_SRC
+
+#+NAME: capture bizfile_search_sandbox
+#+BEGIN_SRC sh :noweb yes :exports results :results verbatim :tangle lgltests.sh :eval no
+<<mkCapture(myargs="bizfile uen 111111111M")>>
+#+END_SRC
+*** utility functions
+
+#+NAME: lgl
 #+BEGIN_SRC python :noweb yes :exports results :results output :var myargs="help" num=0
-print('lgl --config=../lglconfig-demotest.json proforma %s 2>&1' % (myargs))
+print('lgl %s 2>&1' % (myargs))
 #+END_SRC
 
-#+RESULTS: lglrun
-: lgl --config=../lglconfig-demotest.json help 2>&1
-
-#+NAME: capture
+#+NAME: mkCapture
 #+BEGIN_SRC python :noweb yes :exports results :results output :var myargs="noargs" num=0
-print('lgl --config=../lglconfig-demotest.json %s %02d.out 2> %02d.err' % (myargs, num, num))
+dashed = myargs.replace(" ","-")
+print('lgl %s > %s.out 2> %s.err' % (myargs, dashed, dashed))
 #+END_SRC
 
-#+RESULTS: capture
-: lgl --config=../lglconfig-demotest.json noargs > 00.out 2> 00.err
-
-#+RESULTS: lgl-capture
-: lgl > 01.out 2> 01.err
-: lgl --help > 02.out 2> 02.err
-: lgl -t init --config=lglconfig.json > 03.out 2> 03.err
-: lgl proforma schemalist > 04.out 2> 04.err
-: lgl proforma schemalist hw3 > 05.out 2> 05.err
-: lgl proforma schemalist hw3 example > 06.out 2> 06.err
+#+RESULTS: mkCapture
+: lgl --config=../lglconfig-demotest.json noargs 00.out 2> 00.err
 
 The actual test script combines all of the above.
 
-#+NAME: lgltest
-#+BEGIN_SRC sh :noweb yes :tangle lgltest.sh :shebang #!/bin/bash
-  <<lgltest-setup>>
-  <<capture(opts="foo",num=4)>>
-#+END_SRC
-
-#+RESULTS: lgltest
-
 After running the tests, we compare to see if the output of the tests match the expectations.
-
-** lgl proforma schemalist
-
-#+NAME: proforma schemalist
-#+BEGIN_SRC sh :noweb yes :results verbatim
-proforma schemalist
-#+END_SRC
-
-#+RESULTS: proforma schemalist
-: {
-:   "example1a": "Example Template One Alpha",
-:   "example1b": "Example Template One Beta",
-:   "example1c": "Example Template One C",
-:   "example1d": "Example Template One D",
-:   "example1e": "Example Template One E",
-:   "example1f": "Example Template One F",
-:   "hw3": "Hello World 3"
-: }
-
 
 
 * Testing the library

@@ -157,8 +157,9 @@ var arg_subsubsubcommand = argv._[5];
 console_error(argv);
 
 let config_file: string | null
-config_file = json_filename(argv.config || "lglconfig.json")
-console_error(`identified config_file as ${config_file}`)
+config_file = argv.config || "lglconfig.json"
+const config_found = json_filename(config_file)
+console_error(`identified config_file as ${config_file}, config_found=${config_found}`)
 
 interface Config {
     email?: string;
@@ -172,7 +173,7 @@ interface World {
 }
 
 let config: Config
-if (config_file != undefined) { config = <Config>load_json(<string>config_file); }
+if (config_found != undefined) { config = <Config>load_json(<string>config_found); }
 else { config = {} }
 const world: (World | null) = <World>load_world();
 
@@ -220,7 +221,7 @@ else {
 }
 
 function check_config() {
-    if (!config_file) {
+    if (!config_found) {
         console.error("lgl: can't find config file; system has not been initialized. run lgl init");
         process.exit(1);
     }
@@ -256,14 +257,15 @@ async function run_init(init_or_login: ("init" | "login") = "init") {
     Or just go to a different directory, without a ${config_file} file, and lgl init.`);
         process.exit(1);
     } else if (config_file) {
-        console_error(`config_file is defined: ${config_file}`);
+        console_error(`config_file is defined though we can't find it: ${config_file}`);
     }
     else {
         config_file = "lglconfig.json"
         console_error(`config_file is not defined! will proceed with ${config_file} in current directory.`);
     }
 
-    if (LGL_TEST) {
+  if (LGL_TEST) {
+    console_error(`LGL_TEST: config_file = ${config_file}`)
         fs.writeFileSync(config_file, JSON.stringify(
             {
                 "email": "demo-20190808@example.com",
@@ -273,14 +275,15 @@ async function run_init(init_or_login: ("init" | "login") = "init") {
             }
             , null, 2) + "\n");
         console.log(`You have set up a Legalese account with test credentials.
+Those credentials have been saved to ${config_file}
 Commands will work with limited functionality for demo purposes.
 When you are ready to use the system for real,
-  rm lglconfig.json
+  rm ${config_file}
   lgl init <email>
 `);
         return;
     }
-    else {
+
         let prompt_pw
         let api_response
         let snark = true;
@@ -318,7 +321,7 @@ When you are ready to use the system for real,
             "v01_live_api_key": _.keys(api_response.app_metadata.v01_live_api_keys)[0],
             "v01_test_api_key": _.keys(api_response.app_metadata.v01_test_api_keys)[0],
         }, null, 2) + "\n");
-    }
+
     console.log(`You have created a Legalese account!
 To proceed, please confirm your email address.
 You should see a verification request in your Inbox.`)

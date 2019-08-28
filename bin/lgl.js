@@ -124,11 +124,12 @@ if (arg_subsubcommand) {
 var arg_subsubsubcommand = argv._[5];
 console_error(argv);
 var config_file;
-config_file = json_filename(argv.config || "lglconfig.json");
-console_error("identified config_file as " + config_file);
+config_file = argv.config || "lglconfig.json";
+var config_found = json_filename(config_file);
+console_error("identified config_file as " + config_file + ", config_found=" + config_found);
 var config;
-if (config_file != undefined) {
-    config = load_json(config_file);
+if (config_found != undefined) {
+    config = load_json(config_found);
 }
 else {
     config = {};
@@ -182,7 +183,7 @@ else {
     console.error(cli_help);
 }
 function check_config() {
-    if (!config_file) {
+    if (!config_found) {
         console.error("lgl: can't find config file; system has not been initialized. run lgl init");
         process.exit(1);
     }
@@ -195,7 +196,7 @@ function check_config() {
 function run_init(init_or_login) {
     if (init_or_login === void 0) { init_or_login = "init"; }
     return __awaiter(this, void 0, void 0, function () {
-        var prompt_pw, api_response, snark_1, e_1, e_2;
+        var prompt_pw, api_response, snark, e_1, e_2;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -216,74 +217,73 @@ function run_init(init_or_login) {
                         process.exit(1);
                     }
                     else if (config_file) {
-                        console_error("config_file is defined: " + config_file);
+                        console_error("config_file is defined though we can't find it: " + config_file);
                     }
                     else {
                         config_file = "lglconfig.json";
                         console_error("config_file is not defined! will proceed with " + config_file + " in current directory.");
                     }
-                    if (!LGL_TEST) return [3 /*break*/, 1];
-                    fs.writeFileSync(config_file, JSON.stringify({
-                        "email": "demo-20190808@example.com",
-                        "user_id": "5d4c03aa302f420cc73dcc05",
-                        "v01_test_api_key": "f4571b7c-be77-11e9-b309-a72af58ab7fe",
-                        "v01_live_api_key": "f4571b7c-be77-11e9-b309-a72af58ab7fe",
-                    }, null, 2) + "\n");
-                    console.log("You have set up a Legalese account with test credentials.\nCommands will work with limited functionality for demo purposes.\nWhen you are ready to use the system for real,\n  rm lglconfig.json\n  lgl init <email>\n");
-                    return [2 /*return*/];
-                case 1:
-                    prompt_pw = void 0;
-                    api_response = void 0;
-                    snark_1 = true;
-                    if (!(init_or_login == "init")) return [3 /*break*/, 7];
+                    if (LGL_TEST) {
+                        console_error("LGL_TEST: config_file = " + config_file);
+                        fs.writeFileSync(config_file, JSON.stringify({
+                            "email": "demo-20190808@example.com",
+                            "user_id": "5d4c03aa302f420cc73dcc05",
+                            "v01_test_api_key": "f4571b7c-be77-11e9-b309-a72af58ab7fe",
+                            "v01_live_api_key": "f4571b7c-be77-11e9-b309-a72af58ab7fe",
+                        }, null, 2) + "\n");
+                        console.log("You have set up a Legalese account with test credentials.\nThose credentials have been saved to " + config_file + "\nCommands will work with limited functionality for demo purposes.\nWhen you are ready to use the system for real,\n  rm " + config_file + "\n  lgl init <email>\n");
+                        return [2 /*return*/];
+                    }
+                    snark = true;
+                    if (!(init_or_login == "init")) return [3 /*break*/, 6];
                     return [4 /*yield*/, prompts.prompt([{ type: 'password', name: 'pw1', message: "Enter new password: " },
                             { type: 'password', name: 'pw2', message: "Confirm password: " }])];
-                case 2:
+                case 1:
                     prompt_pw = _a.sent();
                     if (prompt_pw.pw1 != prompt_pw.pw2) {
                         console.error("Passwords did not match. Please try again.");
                         process.exit(1);
                     }
-                    setTimeout(function () { if (snark_1) {
+                    setTimeout(function () { if (snark) {
                         console.log("We appreciate your patience. This may be slow, but it's still faster than hiring a law firm.");
                     } }, 1000);
-                    _a.label = 3;
-                case 3:
-                    _a.trys.push([3, 5, , 6]);
+                    _a.label = 2;
+                case 2:
+                    _a.trys.push([2, 4, , 5]);
                     return [4 /*yield*/, rp({ method: 'POST', uri: URI_BASE + "/users/create", body: { email: arg_subcommand, password: prompt_pw.pw1 }, json: true })];
-                case 4:
+                case 3:
                     api_response = _a.sent();
-                    return [3 /*break*/, 6];
-                case 5:
+                    return [3 /*break*/, 5];
+                case 4:
                     e_1 = _a.sent();
                     console.error("lgl: error while calling API /create");
                     console.error(e_1);
                     process.exit(1);
-                    return [3 /*break*/, 6];
-                case 6:
+                    return [3 /*break*/, 5];
+                case 5:
                     console.log("Creating Legalese account...");
-                    return [3 /*break*/, 13];
-                case 7: return [4 /*yield*/, prompts.prompt([{ type: 'password', name: 'pw1', message: "Enter lgl password: " }])];
-                case 8:
-                    prompt_pw = _a.sent();
-                    _a.label = 9;
-                case 9:
-                    _a.trys.push([9, 11, , 12]);
-                    return [4 /*yield*/, rp({ method: 'POST', uri: URI_BASE + "/users/create", body: { email: arg_subcommand, password: prompt_pw.pw1 }, json: true })];
-                case 10:
-                    api_response = _a.sent();
                     return [3 /*break*/, 12];
-                case 11:
+                case 6: return [4 /*yield*/, prompts.prompt([{ type: 'password', name: 'pw1', message: "Enter lgl password: " }])];
+                case 7:
+                    prompt_pw = _a.sent();
+                    _a.label = 8;
+                case 8:
+                    _a.trys.push([8, 10, , 11]);
+                    return [4 /*yield*/, rp({ method: 'POST', uri: URI_BASE + "/users/create", body: { email: arg_subcommand, password: prompt_pw.pw1 }, json: true })];
+                case 9:
+                    api_response = _a.sent();
+                    return [3 /*break*/, 11];
+                case 10:
                     e_2 = _a.sent();
                     console.error("lgl: error while calling API /create");
                     console.error(e_2);
                     process.exit(1);
-                    return [3 /*break*/, 12];
-                case 12:
+                    return [3 /*break*/, 11];
+                case 11:
                     console.log("Re-creating Legalese account...");
-                    _a.label = 13;
-                case 13:
-                    snark_1 = false;
+                    _a.label = 12;
+                case 12:
+                    snark = false;
                     if (api_response === null) {
                         console.error("lgl: got null response from API; please try again later.");
                         process.exit(1);
@@ -307,21 +307,19 @@ function run_init(init_or_login) {
                         "v01_live_api_key": _.keys(api_response.app_metadata.v01_live_api_keys)[0],
                         "v01_test_api_key": _.keys(api_response.app_metadata.v01_test_api_keys)[0],
                     }, null, 2) + "\n");
-                    _a.label = 14;
-                case 14:
                     console.log("You have created a Legalese account!\nTo proceed, please confirm your email address.\nYou should see a verification request in your Inbox.");
-                    if (!/legalese\.com|gmail\.com/i.test(arg_subcommand)) return [3 /*break*/, 16];
+                    if (!/legalese\.com|gmail\.com/i.test(arg_subcommand)) return [3 /*break*/, 14];
                     // if we wanted to be really creepy
                     // we could look up the MX records for the domain
                     // to determine if it's hosted at Outlook, Yahoo, Gmail, or whatever
                     return [4 /*yield*/, open("https://www.gmail.com/")];
-                case 15:
+                case 13:
                     // if we wanted to be really creepy
                     // we could look up the MX records for the domain
                     // to determine if it's hosted at Outlook, Yahoo, Gmail, or whatever
                     _a.sent();
-                    _a.label = 16;
-                case 16: return [2 /*return*/];
+                    _a.label = 14;
+                case 14: return [2 /*return*/];
             }
         });
     });
