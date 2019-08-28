@@ -179,6 +179,10 @@ else if (arg_command == "query") {
     check_config();
     run_query();
 }
+else if (arg_command == "workflow") {
+    check_config();
+    run_workflow();
+}
 else {
     console.error(cli_help);
 }
@@ -416,7 +420,7 @@ function run_corpsec() {
                         })];
                 case 7:
                     apiRequest = _a.sent();
-                    console.log(JSON.stringify(JSON.parse(apiRequest), null, 2));
+                    console.log(apiRequest);
                     return [3 /*break*/, 9];
                 case 8:
                     e_4 = _a.sent();
@@ -594,6 +598,39 @@ function run_proforma() {
                     process.exit(1);
                     return [3 /*break*/, 19];
                 case 19: return [2 /*return*/];
+            }
+        });
+    });
+}
+///////////////////////////////////////////////////////////////////////////// workflow
+function run_workflow() {
+    return __awaiter(this, void 0, void 0, function () {
+        var apiRequest, e_9;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    _a.trys.push([0, 2, , 3]);
+                    return [4 /*yield*/, rp({
+                            method: 'POST', uri: URI_BASE + ("/workflow/" + arg_subcommand),
+                            body: {
+                                email: config.email,
+                                user_id: config.user_id,
+                                v01_api_key: LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key,
+                                data: JSON.parse(fs.readFileSync(0, 'utf-8'))
+                            },
+                            json: true
+                        })];
+                case 1:
+                    apiRequest = _a.sent();
+                    console.log(JSON.stringify(apiRequest, null, 2));
+                    return [3 /*break*/, 3];
+                case 2:
+                    e_9 = _a.sent();
+                    console.error("lgl: error while calling API /schemalist");
+                    console.error(e_9);
+                    process.exit(1);
+                    return [3 /*break*/, 3];
+                case 3: return [2 /*return*/];
             }
         });
     });
