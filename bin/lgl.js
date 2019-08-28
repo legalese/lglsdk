@@ -421,7 +421,7 @@ function run_corpsec() {
                         })];
                 case 7:
                     apiRequest = _a.sent();
-                    console.log(apiRequest);
+                    console.log(JSON.stringify(apiRequest, null, 2));
                     return [3 /*break*/, 9];
                 case 8:
                     e_4 = _a.sent();
