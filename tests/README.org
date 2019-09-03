@@ -1,5 +1,14 @@
 #+TITLE: LGL SDK TESTS
 
+* Quickstart
+
+Usage:
+
+#+BEGIN_EXAMPLE
+sh lgltest-dev.sh
+sh lgltest-prod.sh
+#+END_EXAMPLE
+
 * Testing the lgl executable
 
 The lgl executable is the preferred way to exercise back-end functionality. It's what users use, so we use it too.
