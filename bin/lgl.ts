@@ -137,6 +137,7 @@ const URI_BASE = (process.env.LGL_URI ? process.env.LGL_URI :
 
 let PROFORMA_FILETYPE = process.env.PROFORMA_FILETYPE || argv.filetype
 
+if (process.env.LGL_URI) console_error(`URI_BASE = ${URI_BASE}`)
 console_error(`templateKey = ${templateKey}`);
 function console_error(str: string) {
     if (LGL_VERBOSE) { console.error(str) }
@@ -157,21 +158,24 @@ var arg_subsubsubcommand = argv._[5];
 console_error(argv);
 
 let config_file: string | null
-config_file = json_filename(argv.config || "lglconfig.json")
+config_file = argv.config || "lglconfig.json"
+const config_found = json_filename(<string>config_file)
+console_error(`identified config_file as ${config_file}, config_found=${config_found}`)
 
 interface Config {
     email?: string;
     user_id?: string;
     v01_live_api_key?: string;
     v01_test_api_key?: string;
-    potato?: string | number;
+  potato?: string | number;
+  auth0_prefix?: string;
 }
 
 interface World {
 }
 
 let config: Config
-if (config_file != undefined) { config = <Config>load_json(<string>config_file); }
+if (config_found != undefined) { config = <Config>load_json(<string>config_found); }
 else { config = {} }
 const world: (World | null) = <World>load_world();
 
@@ -197,12 +201,10 @@ else if (arg_command == "config") {
     run_config()
 }
 else if (arg_command == "demo") {
-    console.log(`a painless introduction to a painful subject`);
     run_demo()
 }
 else if (arg_command == "bizfile" || arg_command == "corpsec") {
     check_config();
-    console.log(`interface with the government's Department of Information Retrieval`);
     run_corpsec()
 }
 else if (arg_command == "proforma") {
@@ -223,13 +225,13 @@ else {
 }
 
 function check_config() {
-    if (!config_file) {
+    if (!config_found) {
         console.error("lgl: can't find config file; system has not been initialized. run lgl init");
         process.exit(1);
     }
 
     if (!config.user_id) {
-        console.error("lgl: can't load config file; system has not been initialized. run lgl init");
+        console.error("lgl: can't load config file; system has not been initialized; no user_id. run lgl init");
         process.exit(2);
     }
 }
@@ -259,14 +261,15 @@ async function run_init(init_or_login: ("init" | "login") = "init") {
     Or just go to a different directory, without a ${config_file} file, and lgl init.`);
         process.exit(1);
     } else if (config_file) {
-        console_error(`config_file is defined: ${config_file}`);
+        console_error(`config_file is defined though we can't find it: ${config_file}`);
     }
     else {
         config_file = "lglconfig.json"
         console_error(`config_file is not defined! will proceed with ${config_file} in current directory.`);
     }
 
-    if (LGL_TEST) {
+  if (LGL_TEST) {
+    console_error(`LGL_TEST: config_file = ${config_file}`)
         fs.writeFileSync(config_file, JSON.stringify(
             {
                 "email": "demo-20190808@example.com",
@@ -276,14 +279,15 @@ async function run_init(init_or_login: ("init" | "login") = "init") {
             }
             , null, 2) + "\n");
         console.log(`You have set up a Legalese account with test credentials.
+Those credentials have been saved to ${config_file}
 Commands will work with limited functionality for demo purposes.
 When you are ready to use the system for real,
-  rm lglconfig.json
+  rm ${config_file}
   lgl init <email>
 `);
         return;
     }
-    else {
+
         let prompt_pw
         let api_response
         let snark = true;
@@ -321,7 +325,7 @@ When you are ready to use the system for real,
             "v01_live_api_key": _.keys(api_response.app_metadata.v01_live_api_keys)[0],
             "v01_test_api_key": _.keys(api_response.app_metadata.v01_test_api_keys)[0],
         }, null, 2) + "\n");
-    }
+
     console.log(`You have created a Legalese account!
 To proceed, please confirm your email address.
 You should see a verification request in your Inbox.`)
@@ -378,8 +382,6 @@ async function run_corpsec() {
     let apiRequest
     if (arg_subcommand == 'search') {
         const searchString = argv._.slice(4, argv.length).join(' ')
-        console.log('searching for basic company details...')
-        console.log(searchString)
         try {
             apiRequest = await rp({
                 method: 'POST', uri: `${URI_BASE}/bizfile/search`,
@@ -397,8 +399,6 @@ async function run_corpsec() {
     }
     else if (arg_subcommand == 'uen') {
         const searchString = argv._.slice(4, argv.length).join(' ')
-        console.log('searching for company')
-        console.log(searchString)
         try {
             apiRequest = await rp({
                 method: 'POST', uri: `${URI_BASE}/bizfile/uen`,
@@ -429,6 +429,7 @@ async function run_proforma() {
         email: config.email, user_id: config.user_id,
         v01_api_key: LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key
     }
+  if (config.auth0_prefix) { body['auth0_prefix'] = config.auth0_prefix }
     // for version 0.9 and 1.0
     let profile_09 = {
         email: config.email,
@@ -600,13 +601,23 @@ function load_json(filename: string): object | undefined {
 }
 
 function json_filename(candidate: string): string | null {
-    var found = findUp.sync(candidate)
-    if (found) {
-        // consider searching up the path, the way tsconfig.json does
-        return found
-    } else {
-        return null // https://medium.com/@hinchman_amanda/null-pointer-references-the-billion-dollar-mistake-1e616534d485
+  // if user explicitly runs --config=somefile.json, don't findUp; expect the config path to specify the file exactly
+  if (argv.config) {
+    console_error(`json_filename: argv.config seems to be true`)
+    if (fs.existsSync(argv.config)) {
+      return argv.config
     }
+    else {
+      return null
+    }
+  }    
+  var found = findUp.sync(candidate)
+  if (found) {
+    // consider searching up the path, the way tsconfig.json does
+    return found
+  } else {
+    return null // https://medium.com/@hinchman_amanda/null-pointer-references-the-billion-dollar-mistake-1e616534d485
+  }
 }
 
 function writeToFile(parsed: string, filename: string, filetype = 'pdf') {
