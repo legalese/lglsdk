@@ -400,8 +400,6 @@ function run_corpsec() {
                 case 5:
                     if (!(arg_subcommand == 'uen')) return [3 /*break*/, 9];
                     searchString = argv._.slice(4, argv.length).join(' ');
-                    console.log('searching for company');
-                    console.log(searchString);
                     _a.label = 6;
                 case 6:
                     _a.trys.push([6, 8, , 9]);

@@ -398,8 +398,6 @@ async function run_corpsec() {
     }
     else if (arg_subcommand == 'uen') {
         const searchString = argv._.slice(4, argv.length).join(' ')
-        console.log('searching for company')
-        console.log(searchString)
         try {
             apiRequest = await rp({
                 method: 'POST', uri: `${URI_BASE}/bizfile/uen`,

@@ -1,0 +1,152 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "Address_SG": {
+      "classNames": "no-left-pad",
+      "properties": {
+        "lines": {
+          "classNames": "no-left-pad",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "New Address Line",
+          "type": "array",
+          "ui:noTitle": true
+        },
+        "postcode": {
+          "$ref": "#/definitions/Address_SG_Postcode"
+        }
+      },
+      "title": "Address",
+      "type": "object",
+      "ui:arrayProminence": "minor",
+      "ui:order": [
+        "lines",
+        "postcode",
+        "*"
+      ]
+    },
+    "Address_SG_Postcode": {
+      "classNames": "col-xs-4 no-left-pad",
+      "title": "Singapore Post Code",
+      "type": "string"
+    },
+    "Corporation_SG": {
+      "description": "Add a new company here.",
+      "properties": {
+        "address": {
+          "$ref": "#/definitions/Address_SG"
+        },
+        "date_of_incorporation": {
+          "title": "Date of Incorporation",
+          "type": "string"
+        },
+        "fullName": {
+          "title": "Name",
+          "type": "string"
+        },
+        "id": {
+          "$ref": "#/definitions/ID_SG_Corporate"
+        },
+        "nationality": {
+          "$ref": "#/definitions/Country"
+        }
+      },
+      "title": "Your Company ",
+      "type": "object"
+    },
+    "Country": {
+      "title": "Country Code (two characters)",
+      "type": "string"
+    },
+    "ID_NRIC": {
+      "properties": {
+        "idtype": {
+          "title": "ID Type",
+          "type": "string"
+        },
+        "idvalue": {
+          "title": "ID Value",
+          "type": "string"
+        }
+      },
+      "title": "Singapore NRIC",
+      "type": "object"
+    },
+    "ID_Passport": {
+      "properties": {
+        "country": {
+          "$ref": "#/definitions/Country"
+        },
+        "idtype": {
+          "title": "ID Type",
+          "type": "string"
+        },
+        "idvalue": {
+          "title": "ID Value",
+          "type": "string"
+        }
+      },
+      "title": "International Passport",
+      "type": "object"
+    },
+    "ID_SG_Corporate": {
+      "properties": {
+        "idtype": {
+          "title": "ID Type",
+          "type": "string"
+        },
+        "idvalue": {
+          "title": "ID Value",
+          "type": "string"
+        }
+      },
+      "title": "UEN",
+      "type": "object"
+    },
+    "ID_SG_Natural": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/ID_Passport"
+        },
+        {
+          "$ref": "#/definitions/ID_NRIC"
+        }
+      ]
+    },
+    "Natural_Person_SG": {
+      "properties": {
+        "address": {
+          "$ref": "#/definitions/Address_SG"
+        },
+        "fullName": {
+          "title": "Name",
+          "type": "string"
+        },
+        "id": {
+          "$ref": "#/definitions/ID_SG_Natural",
+          "title": "ID"
+        },
+        "nationality": {
+          "$ref": "#/definitions/Country"
+        }
+      },
+      "title": "A Natural Person",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "company": {
+      "$ref": "#/definitions/Corporation_SG"
+    },
+    "directors": {
+      "items": {
+        "$ref": "#/definitions/Natural_Person_SG"
+      },
+      "minItems": 1,
+      "title": "Directors",
+      "type": "array"
+    }
+  }
+}

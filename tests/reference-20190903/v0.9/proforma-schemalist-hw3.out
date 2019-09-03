@@ -1,0 +1,59 @@
+{
+  "about": {
+    "title": "Hello World 3",
+    "templateVersion": "1.0.0",
+    "prerequisites": [],
+    "show_in_development": true,
+    "show_in_production": true,
+    "filepath": "hw3",
+    "templateKey": "hw3"
+  },
+  "example": {
+    "company": {
+      "fullName": "My Unicorn Pte. Ltd.",
+      "id": {
+        "idtype": "UEN",
+        "idvalue": "204000000X"
+      },
+      "nationality": "SG",
+      "address": {
+        "lines": [
+          "71 Ayer Rajah Crescent",
+          "#00-00"
+        ],
+        "postcode": "139951"
+      }
+    },
+    "directors": [
+      {
+        "fullName": "Alice",
+        "id": {
+          "idtype": "NRIC",
+          "idvalue": "S1111111A"
+        },
+        "nationality": "SG",
+        "address": {
+          "lines": [
+            "0 Sentosa Cove"
+          ],
+          "postcode": "111111"
+        }
+      },
+      {
+        "fullName": "Bob",
+        "id": {
+          "idtype": "NRIC",
+          "idvalue": "S2222222X"
+        },
+        "nationality": "SG",
+        "address": {
+          "lines": [
+            "0 Changi Way",
+            "#00-00"
+          ],
+          "postcode": "222222"
+        }
+      }
+    ]
+  }
+}

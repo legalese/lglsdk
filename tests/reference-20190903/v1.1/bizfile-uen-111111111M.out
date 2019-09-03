@@ -1,0 +1,175 @@
+{
+  "company": {
+    "addressLine1": "116 PEK CHUAN BUILDING LAVENDER STREET #03-04 ",
+    "addressLine2": "",
+    "city": "",
+    "province": "",
+    "addressState": "",
+    "postalCode": "338730",
+    "email": "",
+    "emailAuthority": false,
+    "assumeProRata": {
+      "multipleClassShares": false,
+      "checkbox": false
+    },
+    "bankAccountDetails": {
+      "accountName": "",
+      "bankAddress": "",
+      "bankName": "",
+      "branchName": "",
+      "accountNumber": "",
+      "bankCode": ""
+    },
+    "datePulled": "2019-08-28T09:31:04.071Z",
+    "entityType": "Company",
+    "ID": "111111111M",
+    "IDtype": "UEN",
+    "name": "JKL TECHNOLOGY PTE LTD",
+    "partyType": "company",
+    "state": "Singapore"
+  },
+  "officers": [
+    {
+      "addressLine1": "Information not given to ACRA",
+      "addressLine2": "",
+      "city": "",
+      "province": "",
+      "addressState": "",
+      "postalCode": "Information not given to ACRA",
+      "email": "",
+      "entityType": "Director",
+      "ID": "XX222222A",
+      "IDtype": "Passport",
+      "name": "ABC, DEF (GHI-YXXXX",
+      "partyType": "person",
+      "isExample": false,
+      "state": ""
+    },
+    {
+      "addressLine1": "Information not given to ACRA",
+      "addressLine2": "",
+      "city": "",
+      "province": "",
+      "addressState": "",
+      "postalCode": "Information not given to ACRA",
+      "email": "",
+      "entityType": "Auditor",
+      "ID": "200056789F",
+      "IDtype": "Passport",
+      "name": "IJK YYYY",
+      "partyType": "person",
+      "isExample": false,
+      "state": ""
+    }
+  ],
+  "constitution": {
+    "date": "21-01-1991",
+    "modelConstitution": "Attached Customized Constitution",
+    "companyType": "EXEMPT PRIVATE COMPANY LIMITED BY SHARES"
+  },
+  "shareholders": [
+    {
+      "addressLine1": "314B 1 ANSON WALK #1-301 ",
+      "addressLine2": "",
+      "city": "",
+      "province": "",
+      "addressState": "",
+      "postalCode": "111111",
+      "email": "",
+      "phone": "",
+      "entityType": "Existing Shareholder",
+      "ID": "S123AC1234E",
+      "IDtype": "Passport",
+      "name": "ABCD123",
+      "partyType": "person",
+      "isExample": false,
+      "state": "",
+      "shares": {
+        "ORDINARY": {
+          "Type": "ordinary",
+          "Number": 900,
+          "Currency": "SINGAPORE<DOLLARS"
+        },
+        "PREFERENCE": {
+          "Type": "preference",
+          "Number": 0,
+          "Currency": "SINGAPORE<DOLLARS"
+        },
+        "OTHERS": {
+          "Type": "others",
+          "Number": 0,
+          "Currency": "SINGAPORE<DOLLARS"
+        }
+      }
+    },
+    {
+      "addressLine1": "314B 1 ANSON WALK #1-301 ",
+      "addressLine2": "",
+      "city": "",
+      "province": "",
+      "addressState": "",
+      "postalCode": "111111",
+      "email": "",
+      "phone": "",
+      "entityType": "Existing Shareholder",
+      "ID": "S8107123A",
+      "IDtype": "NRIC",
+      "name": "VOON YI CUI XXXX",
+      "partyType": "person",
+      "isExample": false,
+      "state": "",
+      "shares": {
+        "ORDINARY": {
+          "Type": "ordinary",
+          "Number": 0,
+          "Currency": "SINGAPORE<DOLLARS"
+        },
+        "PREFERENCE": {
+          "Type": "preference",
+          "Number": 100,
+          "Currency": "SINGAPORE<DOLLARS"
+        },
+        "OTHERS": {
+          "Type": "others",
+          "Number": 0,
+          "Currency": "SINGAPORE<DOLLARS"
+        }
+      }
+    },
+    {
+      "addressLine1": "314B 1 ANSON WALK #1-301 ",
+      "addressLine2": "",
+      "city": "",
+      "province": "",
+      "addressState": "",
+      "postalCode": "111111",
+      "email": "",
+      "phone": "",
+      "entityType": "Existing Shareholder",
+      "ID": "S23BT2997U",
+      "IDtype": "Passport",
+      "name": "EFGH2345",
+      "partyType": "person",
+      "isExample": false,
+      "state": "",
+      "shares": {
+        "ORDINARY": {
+          "Type": "ordinary",
+          "Number": 0,
+          "Currency": "SINGAPORE<DOLLARS"
+        },
+        "PREFERENCE": {
+          "Type": "preference",
+          "Number": 0,
+          "Currency": "SINGAPORE<DOLLARS"
+        },
+        "OTHERS": {
+          "Type": "others",
+          "Number": 100,
+          "Currency": "SINGAPORE<DOLLARS"
+        }
+      }
+    }
+  ],
+  "queryNumber": 9
+}

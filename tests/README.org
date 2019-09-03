@@ -77,6 +77,9 @@ lgl takes arguments. We invoke it differently and see if each run matches expect
 Each test run is operated out of a shell script. The essence of each shell script looks like this:
 
 **** basics: help / account setup
+:PROPERTIES:
+:header-args: :noweb-ref basics
+:END:
 
 Before we get into the meat of the testing we see if the basics are in place.
 
@@ -84,42 +87,17 @@ Before we get into the meat of the testing we see if the basics are in place.
 
 First we make sure ~lgl~ is properly installed, and responding to cries for ~help~.
 
-#+BEGIN_SRC sh :noweb yes :exports results :results verbatim :tangle lgltests.sh :eval no :noweb-sep ""
+#+BEGIN_SRC sh :noweb yes :exports results :results output :noweb-sep ""
 <<mkCapture(myargs="help")>>
 #+END_SRC
 
 #+RESULTS:
-#+begin_example
-usage: lgl [help] command subcommand ...
-commands:
-    help [command]          view more details about command
-    init                    initialize account
-    demo                    walks you through key functionality
-    bizfile / corpsec       retrieves company details from government backends
-    proforma                creates paperwork from templates, filled with JSON parameters
-
-    login                   reinitialize account if lglconfig.json has gone missing
-    config                  manipulate lglconfig.json. Or you could just edit it yourself.
-
-options:
-    --test                  all commands will run in test mode against the dev sandbox
-    --verbose               verbose logging
-    --world=some.json       load environment context from some.json file
-    --config=conf.json      load configuration from conf.json instead of default ./lglconfig.json
-
-environment variables:
-    LGL_VERBOSE   set to truthy to get more verbosity
-
-
-try: lgl help demo
-
-#+end_example
 
 ***** -t init
 
 We set up some test credentials. Without them, the rest of the tests wouldn't work.
 
-#+BEGIN_SRC sh :noweb yes :exports results :results verbatim :tangle lgltests.sh :eval no :noweb-sep ""
+#+BEGIN_SRC sh :noweb yes :exports results :results verbatim :eval no :noweb-sep ""
 <<mkCapture(myargs="init -t")>>
 #+END_SRC
 
@@ -167,96 +145,238 @@ We set up one test script for development testing; this can be used for TDD.
 
 We set up one test script for production testing; this is used for DevOps.
 
-*** Resolving a test case
+*** Populating the test points
 
 #+NAME: range-liveness-version
 #+BEGIN_SRC python :noweb yes :exports results :results output :var liveness=liveness_development :var version=version :var service=service
 import re
 for l in liveness:
   for v in version:
-    print("subdir=%s-%s; mkdir -p $subdir; cd $subdir;" % (l[0], v[0]))
+    print("subdir=%s/%s; mkdir -p $subdir; cd $subdir;" % (l[0], v[0]))
+    print("echo \"*** testing %s/%s\"" % (l[0], v[0]))
     for s in service:
       if re.match(r'bizfile', s[0]) and v[0] != 'v1.1': continue
       dashed = s[0].replace(" ","-")
+      print("echo LGL_URI=%s/%s/%s lgl %s %s %s > %s.run" %
+            (l[1], s[1], v[0],    v[1], s[0], s[2], dashed))
       print("LGL_URI=%s/%s/%s lgl %s %s %s > %s.out 2> %s.err" %
-            (l[1], s[1], v[0],      v[1], s[0], s[2], dashed, dashed))
-    print("cd ..")
+            (l[1], s[1], v[0],    v[1], s[0], s[2], dashed, dashed))
+    print("cd ../..")
 #+END_SRC
 
 #+RESULTS: range-liveness-version
 #+begin_example
-subdir=local-v0.9; mkdir -p $subdir; cd $subdir;
+subdir=local/v0.9; mkdir -p $subdir; cd $subdir;
+echo "*** testing local/v0.9"
+echo LGL_URI=http://localhost/api/corpsec/v0.9 lgl --version=0.9 proforma schemalist  > proforma-schemalist.run
 LGL_URI=http://localhost/api/corpsec/v0.9 lgl --version=0.9 proforma schemalist  > proforma-schemalist.out 2> proforma-schemalist.err
+echo LGL_URI=http://localhost/api/corpsec/v0.9 lgl --version=0.9 proforma schemalist hw3  > proforma-schemalist-hw3.run
 LGL_URI=http://localhost/api/corpsec/v0.9 lgl --version=0.9 proforma schemalist hw3  > proforma-schemalist-hw3.out 2> proforma-schemalist-hw3.err
+echo LGL_URI=http://localhost/api/corpsec/v0.9 lgl --version=0.9 proforma schemalist hw3 example  > proforma-schemalist-hw3-example.run
 LGL_URI=http://localhost/api/corpsec/v0.9 lgl --version=0.9 proforma schemalist hw3 example  > proforma-schemalist-hw3-example.out 2> proforma-schemalist-hw3-example.err
+echo LGL_URI=http://localhost/api/corpsec/v0.9 lgl --version=0.9 proforma schema hw3  > proforma-schema-hw3.run
 LGL_URI=http://localhost/api/corpsec/v0.9 lgl --version=0.9 proforma schema hw3  > proforma-schema-hw3.out 2> proforma-schema-hw3.err
+echo LGL_URI=http://localhost/api/corpsec/v0.9 lgl --version=0.9 proforma generate hw3 < proforma-schemalist-hw3-example.out > proforma-generate-hw3.run
 LGL_URI=http://localhost/api/corpsec/v0.9 lgl --version=0.9 proforma generate hw3 < proforma-schemalist-hw3-example.out > proforma-generate-hw3.out 2> proforma-generate-hw3.err
-cd ..
-subdir=local-v1.0; mkdir -p $subdir; cd $subdir;
+echo LGL_URI=http://localhost/api/corpsec/v0.9 lgl --version=0.9 proforma generate hw3 hw3.pdf < proforma-schemalist-hw3-example.out > proforma-generate-hw3-hw3.pdf.run
+LGL_URI=http://localhost/api/corpsec/v0.9 lgl --version=0.9 proforma generate hw3 hw3.pdf < proforma-schemalist-hw3-example.out > proforma-generate-hw3-hw3.pdf.out 2> proforma-generate-hw3-hw3.pdf.err
+echo LGL_URI=http://localhost/api/corpsec/v0.9 lgl --version=0.9 proforma generate hw3 hw3.docx < proforma-schemalist-hw3-example.out > proforma-generate-hw3-hw3.docx.run
+LGL_URI=http://localhost/api/corpsec/v0.9 lgl --version=0.9 proforma generate hw3 hw3.docx < proforma-schemalist-hw3-example.out > proforma-generate-hw3-hw3.docx.out 2> proforma-generate-hw3-hw3.docx.err
+cd ../..
+subdir=local/v1.0; mkdir -p $subdir; cd $subdir;
+echo "*** testing local/v1.0"
+echo LGL_URI=http://localhost/api/corpsec/v1.0 lgl --version=0.9 proforma schemalist  > proforma-schemalist.run
 LGL_URI=http://localhost/api/corpsec/v1.0 lgl --version=0.9 proforma schemalist  > proforma-schemalist.out 2> proforma-schemalist.err
+echo LGL_URI=http://localhost/api/corpsec/v1.0 lgl --version=0.9 proforma schemalist hw3  > proforma-schemalist-hw3.run
 LGL_URI=http://localhost/api/corpsec/v1.0 lgl --version=0.9 proforma schemalist hw3  > proforma-schemalist-hw3.out 2> proforma-schemalist-hw3.err
+echo LGL_URI=http://localhost/api/corpsec/v1.0 lgl --version=0.9 proforma schemalist hw3 example  > proforma-schemalist-hw3-example.run
 LGL_URI=http://localhost/api/corpsec/v1.0 lgl --version=0.9 proforma schemalist hw3 example  > proforma-schemalist-hw3-example.out 2> proforma-schemalist-hw3-example.err
+echo LGL_URI=http://localhost/api/corpsec/v1.0 lgl --version=0.9 proforma schema hw3  > proforma-schema-hw3.run
 LGL_URI=http://localhost/api/corpsec/v1.0 lgl --version=0.9 proforma schema hw3  > proforma-schema-hw3.out 2> proforma-schema-hw3.err
+echo LGL_URI=http://localhost/api/corpsec/v1.0 lgl --version=0.9 proforma generate hw3 < proforma-schemalist-hw3-example.out > proforma-generate-hw3.run
 LGL_URI=http://localhost/api/corpsec/v1.0 lgl --version=0.9 proforma generate hw3 < proforma-schemalist-hw3-example.out > proforma-generate-hw3.out 2> proforma-generate-hw3.err
-cd ..
-subdir=local-v1.1; mkdir -p $subdir; cd $subdir;
+echo LGL_URI=http://localhost/api/corpsec/v1.0 lgl --version=0.9 proforma generate hw3 hw3.pdf < proforma-schemalist-hw3-example.out > proforma-generate-hw3-hw3.pdf.run
+LGL_URI=http://localhost/api/corpsec/v1.0 lgl --version=0.9 proforma generate hw3 hw3.pdf < proforma-schemalist-hw3-example.out > proforma-generate-hw3-hw3.pdf.out 2> proforma-generate-hw3-hw3.pdf.err
+echo LGL_URI=http://localhost/api/corpsec/v1.0 lgl --version=0.9 proforma generate hw3 hw3.docx < proforma-schemalist-hw3-example.out > proforma-generate-hw3-hw3.docx.run
+LGL_URI=http://localhost/api/corpsec/v1.0 lgl --version=0.9 proforma generate hw3 hw3.docx < proforma-schemalist-hw3-example.out > proforma-generate-hw3-hw3.docx.out 2> proforma-generate-hw3-hw3.docx.err
+cd ../..
+subdir=local/v1.1; mkdir -p $subdir; cd $subdir;
+echo "*** testing local/v1.1"
+echo LGL_URI=http://localhost/api/corpsec/v1.1 lgl  proforma schemalist  > proforma-schemalist.run
 LGL_URI=http://localhost/api/corpsec/v1.1 lgl  proforma schemalist  > proforma-schemalist.out 2> proforma-schemalist.err
+echo LGL_URI=http://localhost/api/corpsec/v1.1 lgl  proforma schemalist hw3  > proforma-schemalist-hw3.run
 LGL_URI=http://localhost/api/corpsec/v1.1 lgl  proforma schemalist hw3  > proforma-schemalist-hw3.out 2> proforma-schemalist-hw3.err
+echo LGL_URI=http://localhost/api/corpsec/v1.1 lgl  proforma schemalist hw3 example  > proforma-schemalist-hw3-example.run
 LGL_URI=http://localhost/api/corpsec/v1.1 lgl  proforma schemalist hw3 example  > proforma-schemalist-hw3-example.out 2> proforma-schemalist-hw3-example.err
+echo LGL_URI=http://localhost/api/corpsec/v1.1 lgl  proforma schema hw3  > proforma-schema-hw3.run
 LGL_URI=http://localhost/api/corpsec/v1.1 lgl  proforma schema hw3  > proforma-schema-hw3.out 2> proforma-schema-hw3.err
+echo LGL_URI=http://localhost/api/corpsec/v1.1 lgl  proforma generate hw3 < proforma-schemalist-hw3-example.out > proforma-generate-hw3.run
 LGL_URI=http://localhost/api/corpsec/v1.1 lgl  proforma generate hw3 < proforma-schemalist-hw3-example.out > proforma-generate-hw3.out 2> proforma-generate-hw3.err
+echo LGL_URI=http://localhost/api/corpsec/v1.1 lgl  proforma generate hw3 hw3.pdf < proforma-schemalist-hw3-example.out > proforma-generate-hw3-hw3.pdf.run
+LGL_URI=http://localhost/api/corpsec/v1.1 lgl  proforma generate hw3 hw3.pdf < proforma-schemalist-hw3-example.out > proforma-generate-hw3-hw3.pdf.out 2> proforma-generate-hw3-hw3.pdf.err
+echo LGL_URI=http://localhost/api/corpsec/v1.1 lgl  proforma generate hw3 hw3.docx < proforma-schemalist-hw3-example.out > proforma-generate-hw3-hw3.docx.run
+LGL_URI=http://localhost/api/corpsec/v1.1 lgl  proforma generate hw3 hw3.docx < proforma-schemalist-hw3-example.out > proforma-generate-hw3-hw3.docx.out 2> proforma-generate-hw3-hw3.docx.err
+echo LGL_URI=http://localhost/api/corpsec/v1.1 lgl  bizfile search prive  > bizfile-search-prive.run
 LGL_URI=http://localhost/api/corpsec/v1.1 lgl  bizfile search prive  > bizfile-search-prive.out 2> bizfile-search-prive.err
+echo LGL_URI=http://localhost/api/corpsec/v1.1 lgl  bizfile uen 111111111M  > bizfile-uen-111111111M.run
 LGL_URI=http://localhost/api/corpsec/v1.1 lgl  bizfile uen 111111111M  > bizfile-uen-111111111M.out 2> bizfile-uen-111111111M.err
-cd ..
+cd ../..
 #+end_example
 
-
 #+NAME: test-prod
-#+BEGIN_SRC sh  :shebang #!/bin/bash :noweb yes :tangle lgltest-prod.sh :exports results :results verbatim :eval no
+#+BEGIN_SRC sh  :shebang #!/bin/bash :noweb yes :tangle lgltest-prod.sh :eval no
 <<lgltest-setup-common>>
-# we test the production endpoints, across multiple versions
+<<basics>>
 <<range-liveness-version(liveness=liveness_production)>>
+<<test-diff(liveness=liveness_production)>>
+<<diff-liveness-dirs(liveness=liveness_production)>>
 #+END_SRC
 
 #+NAME: test-dev
-#+BEGIN_SRC sh  :shebang #!/bin/bash :noweb yes :tangle lgltest-dev.sh :exports results :results verbatim :eval no
+#+BEGIN_SRC sh  :shebang #!/bin/bash :noweb yes :tangle lgltest-dev.sh :eval no
 <<lgltest-setup-common>>
-# we test the development endpoints, across multiple versions
+<<basics>>
 <<range-liveness-version(liveness=liveness_development)>>
+<<test-diff(liveness=liveness_development)>>
+<<diff-liveness-dirs(liveness=liveness_development)>>
 #+END_SRC
 
+TODO: find a way to refactor the above two to just split on the difference between production and development. but it's not so simple.
 
 #+NAME: lgl
-#+BEGIN_SRC python :noweb yes :exports results :results output :var myargs="help" num=0
+#+BEGIN_SRC python :noweb yes :exports results :results output :var myargs="help"
 print('lgl %s 2>&1' % (myargs))
 #+END_SRC
 
 #+NAME: mkCapture
-#+BEGIN_SRC python :noweb yes :exports results :results output :var myargs="noargs" num=0
+#+BEGIN_SRC python :noweb yes :exports results :results output :var myargs="noargs"
 dashed = myargs.replace(" ","-")
-print('lgl $* > %s.out 2> %s.err' % (myargs, dashed, dashed))
+print('lgl %s > %s.out 2> %s.err' % (myargs, dashed, dashed))
 #+END_SRC
 
 The actual test script combines all of the above.
 
 After running the tests, we compare to see if the output of the tests match the expectations.
-*** Comparing with expectations
+*** Comparing the test run with the expected file
+
+**** Ignoring irrelevant differences
+
+Comparing byte-for-byte we will always see differences in the docx and PDFs, because:
+
+#+BEGIN_EXAMPLE
+20190903-21:31:21 mengwong@venice4:~/src/l/npm/lglsdk/tests% diff --text reference-20190903/local-v0.9/hw3.pdf testruns/20190903-213015/local-v0.9/hw3.pdf
+150c150
+< /CreationDate(D:20190903132901Z')>>
+---
+> /CreationDate(D:20190903133022Z')>>
+172,174c172,174
+< /ID [ <ED1F658537DCED856D4A956206779527>
+< <ED1F658537DCED856D4A956206779527> ]
+< /DocChecksum /2C581B5C5A254F920B845125D13844C9
+---
+> /ID [ <8ACFAAD070DCD323E01E89077CBFBF16>
+> <8ACFAAD070DCD323E01E89077CBFBF16> ]
+> /DocChecksum /7C6B9646DC6645427BD557B0B4958BAC
+20190903-21:31:21 mengwong@venice4:~/src/l/npm/lglsdk/tests%
+#+END_EXAMPLE
+
+We need to reduce the reference directory and the testrun directory to equivalence classes by ignoring these differences.
+
+#+NAME: test-diff
+#+BEGIN_SRC python :noweb yes :exports results :results output :var ref="reference-20190903" :var liveness=liveness_development :var version=version
+print("cd ../..")
+myre = '^/CreationDate|^/ID \\[|^<.*> \\]|^/DocChecksum'
+for v in version:
+  print("egrep -a -v \"%s\" < %s/%s/hw3.pdf > %s/%s/hw3.pdfsimple" % (myre, ref, v[0], ref, v[0]))
+  for l in liveness:
+    print("egrep -a -v \"%s\" < $testdir/%s/%s/hw3.pdf > $testdir/%s/%s/hw3.pdfsimple" % (myre, l[0], v[0], l[0], v[0]))
+#+END_SRC
+
+So we ignore any diffs complaining about ~.pdf~ and ~.docx~, and we only care about diffs complaining about ~.pdfsimple~.
+
+#+RESULTS: test-diff
+: cd ../..
+: egrep -a -v "^/CreationDate|^/ID \[|^<.*> \]|^/DocChecksum" < reference-20190903/v0.9/hw3.pdf > reference-20190903/v0.9/hw3.pdfsimple
+: egrep -a -v "^/CreationDate|^/ID \[|^<.*> \]|^/DocChecksum" < $testdir/local/v0.9/hw3.pdf > $testdir/local/v0.9/hw3.pdfsimple
+: egrep -a -v "^/CreationDate|^/ID \[|^<.*> \]|^/DocChecksum" < reference-20190903/v1.0/hw3.pdf > reference-20190903/v1.0/hw3.pdfsimple
+: egrep -a -v "^/CreationDate|^/ID \[|^<.*> \]|^/DocChecksum" < $testdir/local/v1.0/hw3.pdf > $testdir/local/v1.0/hw3.pdfsimple
+: egrep -a -v "^/CreationDate|^/ID \[|^<.*> \]|^/DocChecksum" < reference-20190903/v1.1/hw3.pdf > reference-20190903/v1.1/hw3.pdfsimple
+: egrep -a -v "^/CreationDate|^/ID \[|^<.*> \]|^/DocChecksum" < $testdir/local/v1.1/hw3.pdf > $testdir/local/v1.1/hw3.pdfsimple
+
+**** Comparing each directory
+
+#+NAME: diff-liveness-dirs
+#+BEGIN_SRC python :noweb yes :exports results :results output :var liveness=liveness_development :var ref="reference-20190903" :var version=version
+import re
+for l in liveness:
+  print("diff -x \*.docx -x \*.pdf -x \*generate\*.out -qru %s/ $testdir/%s/ | egrep -v \"(docx|pdf|generate-.*\\.out) differ\" > $testdir/failures-%s.txt" % (ref, l[0], l[0]))
+  print("diff -sqru %s/ $testdir/%s/ > $testdir/identicals-%s.txt" % (ref, l[0], l[0]))
+  for v in version:
+    print("for binary in %s/%s/*.{docx,pdf};" % (ref,v[0])) ;
+    print("  do filename=`basename $binary`;")
+    print("     if [ $(stat -f \"%%z\" $binary) = $(stat -f \"%%z\" $testdir/%s/%s/$filename) ];" % (l[0],v[0]))
+ #  print("        then echo \" ** file sizes are the same for $filename\";")
+    print("        then :;") # no-op
+    print("        else echo \" !! file sizes differ for %s/%s/$filename\";" % (l[0],v[0]))
+    print("             ls -l $binary %s/%s/$filename | tee failures-%s-%s-$filename.txt; fi; done" % (l[0],v[0],l[0],v[0]))
+
+print("onoes=\"\"; for f in $testdir/failures-*.txt; do if [ -s $f ]; then onoes=\"$onoes $f\"; fi; done")
+print("if [ -n \"$onoes\" ]; then echo \"!!! tests failed! $onoes\"; ls -l $testdir/failures-*.txt; echo ""; cat $testdir/failures-*.txt; else echo \"*** all tests passed!\"; fi");
+#+END_SRC
+
+#+RESULTS: diff-liveness-dirs
+#+begin_example
+diff -x \*.docx -x \*.pdf -x \*generate\*.out -qru reference-20190903/ $testdir/local/ | egrep -v "(docx|pdf|generate-.*\.out) differ" > $testdir/failures-local.txt
+diff -sqru reference-20190903/ $testdir/local/ > $testdir/identicals-local.txt
+for binary in reference-20190903/v0.9/*.{docx,pdf};
+  do filename=`basename $binary`;
+     if [ $(stat -f "%z" $binary) = $(stat -f "%z" $testdir/local/v0.9/$filename) ];
+        then :;
+        else echo " !! file sizes differ for local/v0.9/$filename";
+             ls -l $binary local/v0.9/$filename | tee failures-local-v0.9-$filename.txt; fi; done
+for binary in reference-20190903/v1.0/*.{docx,pdf};
+  do filename=`basename $binary`;
+     if [ $(stat -f "%z" $binary) = $(stat -f "%z" $testdir/local/v1.0/$filename) ];
+        then :;
+        else echo " !! file sizes differ for local/v1.0/$filename";
+             ls -l $binary local/v1.0/$filename | tee failures-local-v1.0-$filename.txt; fi; done
+for binary in reference-20190903/v1.1/*.{docx,pdf};
+  do filename=`basename $binary`;
+     if [ $(stat -f "%z" $binary) = $(stat -f "%z" $testdir/local/v1.1/$filename) ];
+        then :;
+        else echo " !! file sizes differ for local/v1.1/$filename";
+             ls -l $binary local/v1.1/$filename | tee failures-local-v1.1-$filename.txt; fi; done
+onoes=""; for f in $testdir/failures-*.txt; do if [ -s $f ]; then onoes="$onoes $f"; fi; done
+if [ -n "$onoes" ]; then echo "!!! tests failed! $onoes"; ls -l $testdir/failures-*.txt; echo ; cat $testdir/failures-*.txt; else echo "*** all tests passed!"; fi
+#+end_example
+
+**** Which tests failed?
+
+If any of the ~failures-*.txt~ files are nonblank then we take it that something failed.
+
+**** Setting up the Reference Directory
+
+We take the 0.9, 1.0, and 1.1 outputs as the unit of comparison.
+
+It shouldn't matter what ~LGL_URI~ endpoint we probe; we should expect the same results.
+
+So we clean up the output dirs until they look like this:
+
+#+BEGIN_EXAMPLE
+  /Users/mengwong/src/l/npm/lglsdk/tests/reference-20190903:
+  total used in directory 0 available 9223372036851515156
+  drwxr-xr-x   5 staff  160 Sep  3 22:02 .
+  drwxr-xr-x  19 staff  608 Sep  3 22:03 ..
+  drwxr-xr-x  19 staff  608 Sep  3 21:46 v0.9
+  drwxr-xr-x  18 staff  576 Sep  3 21:29 v1.0
+  drwxr-xr-x  22 staff  704 Sep  3 21:29 v1.1
+#+END_EXAMPLE
+
+And we use that to diff the test-run folders against.
 
 * Testing the library
 
 The test suite directly calls the library functions exposed by the SDK. Most of those library functions map to back-end endpoints. The output of those function calls is compared against known expectations.
-
-* Components
-
-** Account Creation
-
-** Bizfile
-
-** Proforma
-
-** Workflow
-
-** Payment
 
 * Testing the endpoints
 
