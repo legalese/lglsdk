@@ -2,47 +2,99 @@
 
 * Testing the lgl executable
 
-The test suite runs the lgl executable against given command-line parameters and STDIN inputs. The STDOUT from the executable is compared against known expectations.
+The lgl executable is the preferred way to exercise back-end functionality. It's what users use, so we use it too.
 
-#+NAME: lgltest-setup
-#+BEGIN_SRC sh :shebang #!/bin/bash :tangle lgltests.sh
+This test suite runs the lgl executable against a range of environment
+variables, command-line parameters, and STDIN inputs. For each input,
+we expect certain output. Now you're thinking functionally!
+
+First we set up a master directory to contain the output of one or more test runs.
+
+A test run operates against a specific endpoint, using a specific protocol version, operating one or more service families.
+
+Together, multiple runs will provide complete test coverage.
+
+** How tests pass or fail
+
+The results of each test are saved into ~*.out~ (for STDOUT) and ~*.err~ for (STDERR) files.
+
+Then directory's run output is diffed against a known reference set of expectations.
+
+If reference is equivalent to the output, the test passes.
+
+** Setting up the Test-Run Master Directory
+
+A test run starts at a particular point in time. We create a directory accordingly.
+
+#+NAME: lgltest-setup-common
+#+BEGIN_SRC sh :eval no :noweb yes :noweb-sep ""
+# do not edit *.sh files! they are automatically tangled out of tests/README.org with C-c C-v t
+
 testdir=testruns/`date +%Y%m%d-%H%M%S`
+echo "*** saving to $testdir"
 mkdir -p $testdir
 cd $testdir
-export LGL_URI=http://localhost/api/corpsec/v1.1
+export LGL_URI
+function test_services { (
+  mkdir $subdir; cd $subdir
+  echo well, here we are working against $LGL_URI
+  <<arguments>>
+) }
 #+END_SRC
 
-** The Tests
+Within that master directory, we may create one or more subdirectories to represent specific combinations of endpoint and version.
 
-*** -t init
+Within those subdirectories, we create one or more files; each file represents a particular test point, a particular ~lgl~ invocation.
 
-#+NAME: init
-#+BEGIN_SRC sh :noweb yes :exports results :results verbatim
-<<lgl(myargs="-t init")>>
+** Dimensions of Test Coverage
+
+To achieve full coverage we need to take every point in test space across the following dimensions:
+
+*** liveness: development / production
+:PROPERTIES:
+:header-args: :noweb-ref liveness
+:END:
+
+**** development
+#+NAME: liveness_development
+| local | http://localhost/api/ |
+
+**** production
+#+NAME: liveness_production
+| v2  | https://legalese.com/api/corpsec                     |
+| 1a  | https://ap-southeast-1a-api.legalese.com/api/corpsec |
+| 1b  | https://ap-southeast-1b-api.legalese.com/api/corpsec |
+| api | https://api.legalese.com/api/corpsec                 |
+
+*** version: 0.9 / 1.0 / 1.1
+
+#+NAME: version
+| v0.9 | --version=v0.9 |
+| v1.0 | --version=v0.9 |
+| v1.1 |                |
+
+*** command line arguments
+:PROPERTIES:
+:header-args: :noweb-ref arguments
+:END:
+
+lgl takes arguments. We invoke it differently and see if each run matches expectations.
+
+Each test run is operated out of a shell script. The essence of each shell script looks like this:
+
+**** basics: help / account setup
+
+Before we get into the meat of the testing we see if the basics are in place.
+
+***** help
+
+First we make sure ~lgl~ is properly installed, and responding to cries for ~help~.
+
+#+BEGIN_SRC sh :noweb yes :exports results :results verbatim :tangle lgltests.sh :eval no :noweb-sep ""
+<<mkCapture(myargs="help")>>
 #+END_SRC
 
-#+RESULTS: init
-: You have set up a Legalese account with test credentials.
-: Those credentials have been saved to lglconfig.json
-: Commands will work with limited functionality for demo purposes.
-: When you are ready to use the system for real,
-:   rm lglconfig.json
-:   lgl init <email>
-: 
-
-#+NAME: capture init
-#+BEGIN_SRC sh :noweb yes :exports results :results verbatim :tangle lgltests.sh :eval no
-<<mkCapture(myargs="init -t")>>
-#+END_SRC
-
-*** help
-
-#+NAME: help
-#+BEGIN_SRC sh :noweb yes :exports results :results verbatim
-<<lgl(myargs="help")>>
-#+END_SRC
-
-#+RESULTS: help
+#+RESULTS:
 #+begin_example
 usage: lgl [help] command subcommand ...
 commands:
@@ -69,16 +121,43 @@ try: lgl help demo
 
 #+end_example
 
-#+NAME: capture help
-#+BEGIN_SRC sh :noweb yes :exports results :results verbatim :tangle lgltests.sh :eval no
-<<mkCapture(myargs="help")>>
+***** -t init
+
+We set up some test credentials. Without them, the rest of the tests wouldn't work.
+
+#+BEGIN_SRC sh :noweb yes :exports results :results verbatim :tangle lgltests.sh :eval no :noweb-sep ""
+<<mkCapture(myargs="init -t")>>
 #+END_SRC
 
-*** proforma schemalist
+This should succeed with:
 
-#+NAME: schemalist
-#+BEGIN_SRC sh :noweb yes :exports results :results verbatim
-<<lgl(myargs="proforma schemalist")>>
+#+RESULTS:
+: You have set up a Legalese account with test credentials.
+: Those credentials have been saved to lglconfig.json
+: Commands will work with limited functionality for demo purposes.
+: When you are ready to use the system for real,
+:   rm lglconfig.json
+:   lgl init <email>
+: 
+
+If it fails, we get
+
+#+RESULTS:
+: lgl: init: config file lglconfig.json already exists; refusing to init.
+:     If you are sure you want to re-initialize,
+:     and you are prepared to create a new account with a different email address,
+:     delete lglconfig.json and run init again with the new email address.
+:     Or just go to a different directory, without a lglconfig.json file, and lgl init.
+
+
+**** service families: proforma / bizfile / workflow
+
+Then we get into the test of each service.
+
+***** proforma schemalist
+
+#+BEGIN_SRC sh :noweb yes :exports results :results verbatim :tangle lgltests.sh :eval no :noweb-sep ""
+<<mkCapture(myargs="proforma schemalist")>>
 #+END_SRC
 
 #+RESULTS: schemalist
@@ -92,347 +171,79 @@ try: lgl help demo
 :   "hw3": "Hello World 3"
 : }
 
-#+NAME: capture schemalist
-#+BEGIN_SRC sh :noweb yes :exports results :results verbatim :tangle lgltests.sh :eval no
-<<mkCapture(myargs="proforma schemalist")>>
-#+END_SRC
-
-*** proforma schemalist hw3
-
-#+NAME: schemalist_hw3
-#+BEGIN_SRC sh :noweb yes :exports results :results verbatim
-<<lgl(myargs="proforma schemalist hw3")>>
-#+END_SRC
-
-#+RESULTS: schemalist hw3
-#+begin_example
-{
-  "about": {
-    "title": "Hello World 3",
-    "templateVersion": "1.0.0",
-    "prerequisites": [],
-    "show_in_development": true,
-    "show_in_production": true,
-    "filepath": "hw3",
-    "templateKey": "hw3"
-  },
-  "example": {
-    "company": {
-      "fullName": "My Unicorn Pte. Ltd.",
-      "id": {
-        "idtype": "UEN",
-        "idvalue": "204000000X"
-      },
-      "nationality": "SG",
-      "address": {
-        "lines": [
-          "71 Ayer Rajah Crescent",
-          "#00-00"
-        ],
-        "postcode": "139951"
-      }
-    },
-    "directors": [
-      {
-        "fullName": "Alice",
-        "id": {
-          "idtype": "NRIC",
-          "idvalue": "S1111111A"
-        },
-        "nationality": "SG",
-        "address": {
-          "lines": [
-            "0 Sentosa Cove"
-          ],
-          "postcode": "111111"
-        }
-      },
-      {
-        "fullName": "Bob",
-        "id": {
-          "idtype": "NRIC",
-          "idvalue": "S2222222X"
-        },
-        "nationality": "SG",
-        "address": {
-          "lines": [
-            "0 Changi Way",
-            "#00-00"
-          ],
-          "postcode": "222222"
-        }
-      }
-    ]
-  }
-}
-#+end_example
+***** proforma schemalist hw3
 
 #+NAME: capture schemalist hw3
-#+BEGIN_SRC sh :noweb yes :exports results :results verbatim :tangle lgltests.sh :eval no
+#+BEGIN_SRC sh :noweb yes :exports results :results verbatim :tangle lgltests.sh :eval no :noweb-sep ""
 <<mkCapture(myargs="proforma schemalist hw3")>>
 #+END_SRC
 
 #+RESULTS: capture schemalist hw3
 
-*** proforma schemalist hw3 example
-
-#+NAME: schemalist_hw3_example
-#+BEGIN_SRC sh :noweb yes :exports results :results verbatim
-<<lgl(myargs="proforma schemalist hw3 example")>>
-#+END_SRC
-
-#+RESULTS: schemalist_hw3_example
-#+begin_example
-{
-  "company": {
-    "fullName": "My Unicorn Pte. Ltd.",
-    "id": {
-      "idtype": "UEN",
-      "idvalue": "204000000X"
-    },
-    "nationality": "SG",
-    "address": {
-      "lines": [
-        "71 Ayer Rajah Crescent",
-        "#00-00"
-      ],
-      "postcode": "139951"
-    }
-  },
-  "directors": [
-    {
-      "fullName": "Alice",
-      "id": {
-        "idtype": "NRIC",
-        "idvalue": "S1111111A"
-      },
-      "nationality": "SG",
-      "address": {
-        "lines": [
-          "0 Sentosa Cove"
-        ],
-        "postcode": "111111"
-      }
-    },
-    {
-      "fullName": "Bob",
-      "id": {
-        "idtype": "NRIC",
-        "idvalue": "S2222222X"
-      },
-      "nationality": "SG",
-      "address": {
-        "lines": [
-          "0 Changi Way",
-          "#00-00"
-        ],
-        "postcode": "222222"
-      }
-    }
-  ]
-}
-#+end_example
+***** proforma schemalist hw3 example
 
 #+NAME: capture schemalist hw3 example
-#+BEGIN_SRC sh :noweb yes :exports code :results verbatim :tangle lgltests.sh :eval no
+#+BEGIN_SRC sh :noweb yes :exports code :results verbatim :tangle lgltests.sh :eval no :noweb-sep ""
 <<mkCapture(myargs="proforma schemalist hw3 example")>>
 #+END_SRC
 
-*** proforma schema hw3
-
-#+NAME: schema_hw3
-#+BEGIN_SRC sh :noweb yes :exports results :results verbatim
-<<lgl(myargs="proforma schema hw3")>>
-#+END_SRC
-
-#+RESULTS: schema_hw3
-#+begin_example
-{
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "definitions": {
-    "Address_SG": {
-      "classNames": "no-left-pad",
-      "properties": {
-        "lines": {
-          "classNames": "no-left-pad",
-          "items": {
-            "type": "string"
-          },
-          "minItems": 1,
-          "title": "New Address Line",
-          "type": "array",
-          "ui:noTitle": true
-        },
-        "postcode": {
-          "$ref": "#/definitions/Address_SG_Postcode"
-        }
-      },
-      "title": "Address",
-      "type": "object",
-      "ui:arrayProminence": "minor",
-      "ui:order": [
-        "lines",
-        "postcode",
-        "*"
-      ]
-    },
-    "Address_SG_Postcode": {
-      "classNames": "col-xs-4 no-left-pad",
-      "title": "Singapore Post Code",
-      "type": "string"
-    },
-    "Corporation_SG": {
-      "description": "Add a new company here.",
-      "properties": {
-        "address": {
-          "$ref": "#/definitions/Address_SG"
-        },
-        "date_of_incorporation": {
-          "title": "Date of Incorporation",
-          "type": "string"
-        },
-        "fullName": {
-          "title": "Name",
-          "type": "string"
-        },
-        "id": {
-          "$ref": "#/definitions/ID_SG_Corporate"
-        },
-        "nationality": {
-          "$ref": "#/definitions/Country"
-        }
-      },
-      "title": "Your Company ",
-      "type": "object"
-    },
-    "Country": {
-      "title": "Country Code (two characters)",
-      "type": "string"
-    },
-    "ID_NRIC": {
-      "properties": {
-        "idtype": {
-          "title": "ID Type",
-          "type": "string"
-        },
-        "idvalue": {
-          "title": "ID Value",
-          "type": "string"
-        }
-      },
-      "title": "Singapore NRIC",
-      "type": "object"
-    },
-    "ID_Passport": {
-      "properties": {
-        "country": {
-          "$ref": "#/definitions/Country"
-        },
-        "idtype": {
-          "title": "ID Type",
-          "type": "string"
-        },
-        "idvalue": {
-          "title": "ID Value",
-          "type": "string"
-        }
-      },
-      "title": "International Passport",
-      "type": "object"
-    },
-    "ID_SG_Corporate": {
-      "properties": {
-        "idtype": {
-          "title": "ID Type",
-          "type": "string",
-          "ui:howmanydigits": "nine"
-        },
-        "idvalue": {
-          "title": "ID Value",
-          "type": "string"
-        }
-      },
-      "title": "UEN",
-      "type": "object"
-    },
-    "ID_SG_Natural": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/ID_Passport"
-        },
-        {
-          "$ref": "#/definitions/ID_NRIC"
-        }
-      ]
-    },
-    "Natural_Person_SG": {
-      "properties": {
-        "address": {
-          "$ref": "#/definitions/Address_SG"
-        },
-        "fullName": {
-          "title": "Name",
-          "type": "string"
-        },
-        "id": {
-          "$ref": "#/definitions/ID_SG_Natural",
-          "title": "ID"
-        },
-        "nationality": {
-          "$ref": "#/definitions/Country"
-        }
-      },
-      "title": "A Natural Person",
-      "type": "object"
-    }
-  },
-  "properties": {
-    "company": {
-      "$ref": "#/definitions/Corporation_SG"
-    },
-    "directors": {
-      "items": {
-        "$ref": "#/definitions/Natural_Person_SG"
-      },
-      "minItems": 1,
-      "title": "Directors",
-      "type": "array"
-    }
-  }
-}
-#+end_example
+***** proforma schema hw3
 
 #+NAME: capture schema_hw3
-#+BEGIN_SRC sh :noweb yes :exports results :results verbatim :tangle lgltests.sh :eval no
+#+BEGIN_SRC sh :noweb yes :exports results :results verbatim :tangle lgltests.sh :eval no :noweb-sep ""
 <<mkCapture(myargs="proforma schema hw3")>>
 #+END_SRC
 
-*** bizfile search prive
-
-#+NAME: bizfile_search_sandbox
-#+BEGIN_SRC sh :noweb yes :exports results :results verbatim
-<<lgl(myargs="bizfile search prive")>>
-#+END_SRC
+***** bizfile search prive
 
 #+NAME: capture bizfile_search_sandbox
-#+BEGIN_SRC sh :noweb yes :exports results :results verbatim :tangle lgltests.sh :eval no
+#+BEGIN_SRC sh :noweb yes :exports results :results verbatim :tangle lgltests.sh :eval no :noweb-sep ""
 <<mkCapture(myargs="bizfile search prive")>>
 #+END_SRC
 
-*** bizfile uen jkl
+***** bizfile uen jkl
 
-JKL Technologies is a fictitious ACRA APImall Sandbox company that doesn't get billed.
-
-#+NAME: bizfile_search_sandbox
-#+BEGIN_SRC sh :noweb yes :exports results :results verbatim
-<<lgl(myargs="bizfile uen 111111111M")>>
-#+END_SRC
+JKL Technologies is a fictitious ACRA APImall Sandbox company. Queries about that UEN don't get billed.
 
 #+NAME: capture bizfile_search_sandbox
-#+BEGIN_SRC sh :noweb yes :exports results :results verbatim :tangle lgltests.sh :eval no
+#+BEGIN_SRC sh :noweb yes :exports results :results verbatim :tangle lgltests.sh :eval no :noweb-sep ""
 <<mkCapture(myargs="bizfile uen 111111111M")>>
 #+END_SRC
-*** utility functions
+** Putting it all together: Infrastructure & Utilities
+
+We set up one test script for development testing; this can be used for TDD.
+
+We set up one test script for production testing; this is used for DevOps.
+
+*** Resolving LGL_URI
+
+#+NAME: range-liveness-version
+#+BEGIN_SRC python :noweb yes :exports results :results output :var liveness=liveness_development :var version=version
+import json
+for l in liveness:
+ for v in version:
+  print("subdir=%s-%s LGL_URI=%s%s test_services %s" % (l[0], v[0], l[1], v[0], v[1]))
+#+END_SRC
+
+#+RESULTS: range-liveness-version
+: subdir=local-v0.9 LGL_URI=http://localhost/api/v0.9 test_services --version=v0.9
+: subdir=local-v1.0 LGL_URI=http://localhost/api/v1.0 test_services --version=v0.9
+: subdir=local-v1.1 LGL_URI=http://localhost/api/v1.1 test_services 
+
+#+NAME: test-prod
+#+BEGIN_SRC sh  :shebang #!/bin/bash :noweb yes :tangle lgltest-prod.sh :exports results :results verbatim :eval no
+<<lgltest-setup-common>>
+# we test the production endpoints, across multiple versions
+<<range-liveness-version(liveness=liveness_production)>>
+#+END_SRC
+
+#+NAME: test-dev
+#+BEGIN_SRC sh  :shebang #!/bin/bash :noweb yes :tangle lgltest-dev.sh :exports results :results verbatim :eval no
+<<lgltest-setup-common>>
+# we test the development endpoints, across multiple versions
+<<range-liveness-version(liveness=liveness_development)>>
+#+END_SRC
+
 
 #+NAME: lgl
 #+BEGIN_SRC python :noweb yes :exports results :results output :var myargs="help" num=0
@@ -442,16 +253,13 @@ print('lgl %s 2>&1' % (myargs))
 #+NAME: mkCapture
 #+BEGIN_SRC python :noweb yes :exports results :results output :var myargs="noargs" num=0
 dashed = myargs.replace(" ","-")
-print('lgl %s > %s.out 2> %s.err' % (myargs, dashed, dashed))
+print('lgl $1 %s > %s.out 2> %s.err' % (myargs, dashed, dashed))
 #+END_SRC
-
-#+RESULTS: mkCapture
-: lgl --config=../lglconfig-demotest.json noargs 00.out 2> 00.err
 
 The actual test script combines all of the above.
 
 After running the tests, we compare to see if the output of the tests match the expectations.
-
+*** Comparing with expectations
 
 * Testing the library
 
@@ -474,3 +282,9 @@ The test suite directly calls the library functions exposed by the SDK. Most of 
 The server-side API endpoints are implicitly tested as part of the tests of the library and lgl executable.
 
 In future, we could do curl-based testing if an independent channel of coverage is desired.
+
+* Emacs Notes
+
+we use org-mode babel to tangle and execute. ~C-c C-v t~ is the big one.
+
+You want to turn off org-confirm-babel-evaluate and add Python to org-babel-load-languages.
