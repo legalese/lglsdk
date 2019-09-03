@@ -137,6 +137,7 @@ const URI_BASE = (process.env.LGL_URI ? process.env.LGL_URI :
 
 let PROFORMA_FILETYPE = process.env.PROFORMA_FILETYPE || argv.filetype
 
+if (process.env.LGL_URI) console_error(`URI_BASE = ${URI_BASE}`)
 console_error(`templateKey = ${templateKey}`);
 function console_error(str: string) {
     if (LGL_VERBOSE) { console.error(str) }
@@ -158,7 +159,7 @@ console_error(argv);
 
 let config_file: string | null
 config_file = argv.config || "lglconfig.json"
-const config_found = json_filename(config_file)
+const config_found = json_filename(<string>config_file)
 console_error(`identified config_file as ${config_file}, config_found=${config_found}`)
 
 interface Config {
@@ -199,12 +200,10 @@ else if (arg_command == "config") {
     run_config()
 }
 else if (arg_command == "demo") {
-    console.log(`a painless introduction to a painful subject`);
     run_demo()
 }
 else if (arg_command == "bizfile" || arg_command == "corpsec") {
     check_config();
-    console.log(`interface with the government's Department of Information Retrieval`);
     run_corpsec()
 }
 else if (arg_command == "proforma") {
@@ -382,8 +381,6 @@ async function run_corpsec() {
     let apiRequest
     if (arg_subcommand == 'search') {
         const searchString = argv._.slice(4, argv.length).join(' ')
-        console.log('searching for basic company details...')
-        console.log(searchString)
         try {
             apiRequest = await rp({
                 method: 'POST', uri: `${URI_BASE}/bizfile/search`,

@@ -105,6 +105,8 @@ var URI_BASE = (process.env.LGL_URI ? process.env.LGL_URI :
         ? "https://api.legalese.com/api/corpsec/v1.1"
         : "https://api.legalese.com/api/corpsec/v1.1");
 var PROFORMA_FILETYPE = process.env.PROFORMA_FILETYPE || argv.filetype;
+if (process.env.LGL_URI)
+    console_error("URI_BASE = " + URI_BASE);
 console_error("templateKey = " + templateKey);
 function console_error(str) {
     if (LGL_VERBOSE) {
@@ -162,12 +164,10 @@ else if (arg_command == "config") {
     run_config();
 }
 else if (arg_command == "demo") {
-    console.log("a painless introduction to a painful subject");
     run_demo();
 }
 else if (arg_command == "bizfile" || arg_command == "corpsec") {
     check_config();
-    console.log("interface with the government's Department of Information Retrieval");
     run_corpsec();
 }
 else if (arg_command == "proforma") {
@@ -370,8 +370,6 @@ function run_corpsec() {
                 case 0:
                     if (!(arg_subcommand == 'search')) return [3 /*break*/, 5];
                     searchString = argv._.slice(4, argv.length).join(' ');
-                    console.log('searching for basic company details...');
-                    console.log(searchString);
                     _a.label = 1;
                 case 1:
                     _a.trys.push([1, 3, , 4]);
