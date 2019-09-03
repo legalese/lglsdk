@@ -441,6 +441,7 @@ function run_proforma() {
                     };
                     if (config.auth0_prefix) {
                         body['auth0_prefix'] = config.auth0_prefix;
+                        console_error("sending auth0_prefix " + config.auth0_prefix);
                     }
                     profile_09 = {
                         email: config.email,
@@ -571,14 +572,7 @@ function run_proforma() {
                     return [4 /*yield*/, rp({
                             method: 'POST', uri: URI_BASE + "/generate",
                             body: (argv.version == "0.9"
-                                ? __assign((_e = { profile: profile_09 }, _e[templateKey] = arg_subsubcommand, _e.contenttype = PROFORMA_FILETYPE, _e), (JSON.parse(fs.readFileSync(0, 'utf-8')))) : (_f = {
-                                    email: config.email, user_id: config.user_id,
-                                    v01_api_key: LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key
-                                },
-                                _f[templateKey] = arg_subsubcommand,
-                                _f.contenttype = PROFORMA_FILETYPE,
-                                _f.data = JSON.parse(fs.readFileSync(0, 'utf-8')),
-                                _f)),
+                                ? __assign((_e = { profile: profile_09 }, _e[templateKey] = arg_subsubcommand, _e.contenttype = PROFORMA_FILETYPE, _e), (JSON.parse(fs.readFileSync(0, 'utf-8')))) : __assign({}, body, (_f = {}, _f[templateKey] = arg_subsubcommand, _f.contenttype = PROFORMA_FILETYPE, _f.data = JSON.parse(fs.readFileSync(0, 'utf-8')), _f))),
                             json: true
                         })];
                 case 17:

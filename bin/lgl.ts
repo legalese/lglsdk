@@ -429,7 +429,7 @@ async function run_proforma() {
         email: config.email, user_id: config.user_id,
         v01_api_key: LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key
     }
-  if (config.auth0_prefix) { body['auth0_prefix'] = config.auth0_prefix }
+  if (config.auth0_prefix) { body['auth0_prefix'] = config.auth0_prefix; console_error(`sending auth0_prefix ${config.auth0_prefix}`) }
     // for version 0.9 and 1.0
     let profile_09 = {
         email: config.email,
@@ -527,8 +527,7 @@ async function run_proforma() {
                         ...(JSON.parse(fs.readFileSync(0, 'utf-8')))
                     }
                     : {
-                        email: config.email, user_id: config.user_id,
-                        v01_api_key: LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key,
+                      ...body,
                         [templateKey]: arg_subsubcommand,
                         contenttype: PROFORMA_FILETYPE,
                         data: JSON.parse(fs.readFileSync(0, 'utf-8'))
