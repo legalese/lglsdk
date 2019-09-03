@@ -439,6 +439,9 @@ function run_proforma() {
                         email: config.email, user_id: config.user_id,
                         v01_api_key: LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key
                     };
+                    if (config.auth0_prefix) {
+                        body['auth0_prefix'] = config.auth0_prefix;
+                    }
                     profile_09 = {
                         email: config.email,
                         identities: [{ user_id: config.user_id }],
