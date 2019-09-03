@@ -34,12 +34,6 @@ testdir=testruns/`date +%Y%m%d-%H%M%S`
 echo "*** saving to $testdir"
 mkdir -p $testdir
 cd $testdir
-export LGL_URI
-function test_services { (
-  mkdir $subdir; cd $subdir
-  echo well, here we are working against $LGL_URI
-  <<arguments>>
-) }
 #+END_SRC
 
 Within that master directory, we may create one or more subdirectories to represent specific combinations of endpoint and version.
@@ -57,20 +51,20 @@ To achieve full coverage we need to take every point in test space across the fo
 
 **** development
 #+NAME: liveness_development
-| local | http://localhost/api/ |
+| local | http://localhost/api   |
 
 **** production
 #+NAME: liveness_production
-| v2  | https://legalese.com/api/corpsec                     |
-| 1a  | https://ap-southeast-1a-api.legalese.com/api/corpsec |
-| 1b  | https://ap-southeast-1b-api.legalese.com/api/corpsec |
-| api | https://api.legalese.com/api/corpsec                 |
+| v2  | https://legalese.com/api                     |
+| 1a  | https://ap-southeast-1a-api.legalese.com/api |
+| 1b  | https://ap-southeast-1b-api.legalese.com/api |
+| api | https://api.legalese.com/api                 |
 
 *** version: 0.9 / 1.0 / 1.1
 
 #+NAME: version
-| v0.9 | --version=v0.9 |
-| v1.0 | --version=v0.9 |
+| v0.9 | --version=0.9  |
+| v1.0 | --version=0.9  |
 | v1.1 |                |
 
 *** command line arguments
@@ -152,83 +146,70 @@ If it fails, we get
 
 **** service families: proforma / bizfile / workflow
 
-Then we get into the test of each service.
+Finally we get into the test of each service.
 
-***** proforma schemalist
-
-#+BEGIN_SRC sh :noweb yes :exports results :results verbatim :tangle lgltests.sh :eval no :noweb-sep ""
-<<mkCapture(myargs="proforma schemalist")>>
-#+END_SRC
-
-#+RESULTS: schemalist
-: {
-:   "example1a": "Example Template One Alpha",
-:   "example1b": "Example Template One Beta",
-:   "example1c": "Example Template One C",
-:   "example1d": "Example Template One D",
-:   "example1e": "Example Template One E",
-:   "example1f": "Example Template One F",
-:   "hw3": "Hello World 3"
-: }
-
-***** proforma schemalist hw3
-
-#+NAME: capture schemalist hw3
-#+BEGIN_SRC sh :noweb yes :exports results :results verbatim :tangle lgltests.sh :eval no :noweb-sep ""
-<<mkCapture(myargs="proforma schemalist hw3")>>
-#+END_SRC
-
-#+RESULTS: capture schemalist hw3
-
-***** proforma schemalist hw3 example
-
-#+NAME: capture schemalist hw3 example
-#+BEGIN_SRC sh :noweb yes :exports code :results verbatim :tangle lgltests.sh :eval no :noweb-sep ""
-<<mkCapture(myargs="proforma schemalist hw3 example")>>
-#+END_SRC
-
-***** proforma schema hw3
-
-#+NAME: capture schema_hw3
-#+BEGIN_SRC sh :noweb yes :exports results :results verbatim :tangle lgltests.sh :eval no :noweb-sep ""
-<<mkCapture(myargs="proforma schema hw3")>>
-#+END_SRC
-
-***** bizfile search prive
-
-#+NAME: capture bizfile_search_sandbox
-#+BEGIN_SRC sh :noweb yes :exports results :results verbatim :tangle lgltests.sh :eval no :noweb-sep ""
-<<mkCapture(myargs="bizfile search prive")>>
-#+END_SRC
-
-***** bizfile uen jkl
+#+NAME: service
+| proforma schemalist             | corpsec |                                       |
+| proforma schemalist hw3         | corpsec |                                       |
+| proforma schemalist hw3 example | corpsec |                                       |
+| proforma schema hw3             | corpsec |                                       |
+| proforma generate hw3           | corpsec | < proforma-schemalist-hw3-example.out |
+| proforma generate hw3 hw3.pdf   | corpsec | < proforma-schemalist-hw3-example.out |
+| proforma generate hw3 hw3.docx  | corpsec | < proforma-schemalist-hw3-example.out |
+| bizfile search prive            | corpsec |                                       |
+| bizfile uen 111111111M          | corpsec |                                       |
 
 JKL Technologies is a fictitious ACRA APImall Sandbox company. Queries about that UEN don't get billed.
 
-#+NAME: capture bizfile_search_sandbox
-#+BEGIN_SRC sh :noweb yes :exports results :results verbatim :tangle lgltests.sh :eval no :noweb-sep ""
-<<mkCapture(myargs="bizfile uen 111111111M")>>
-#+END_SRC
 ** Putting it all together: Infrastructure & Utilities
 
 We set up one test script for development testing; this can be used for TDD.
 
 We set up one test script for production testing; this is used for DevOps.
 
-*** Resolving LGL_URI
+*** Resolving a test case
 
 #+NAME: range-liveness-version
-#+BEGIN_SRC python :noweb yes :exports results :results output :var liveness=liveness_development :var version=version
-import json
+#+BEGIN_SRC python :noweb yes :exports results :results output :var liveness=liveness_development :var version=version :var service=service
+import re
 for l in liveness:
- for v in version:
-  print("subdir=%s-%s LGL_URI=%s%s test_services %s" % (l[0], v[0], l[1], v[0], v[1]))
+  for v in version:
+    print("subdir=%s-%s; mkdir -p $subdir; cd $subdir;" % (l[0], v[0]))
+    for s in service:
+      if re.match(r'bizfile', s[0]) and v[0] != 'v1.1': continue
+      dashed = s[0].replace(" ","-")
+      print("LGL_URI=%s/%s/%s lgl %s %s %s > %s.out 2> %s.err" %
+            (l[1], s[1], v[0],      v[1], s[0], s[2], dashed, dashed))
+    print("cd ..")
 #+END_SRC
 
 #+RESULTS: range-liveness-version
-: subdir=local-v0.9 LGL_URI=http://localhost/api/v0.9 test_services --version=v0.9
-: subdir=local-v1.0 LGL_URI=http://localhost/api/v1.0 test_services --version=v0.9
-: subdir=local-v1.1 LGL_URI=http://localhost/api/v1.1 test_services 
+#+begin_example
+subdir=local-v0.9; mkdir -p $subdir; cd $subdir;
+LGL_URI=http://localhost/api/corpsec/v0.9 lgl --version=0.9 proforma schemalist  > proforma-schemalist.out 2> proforma-schemalist.err
+LGL_URI=http://localhost/api/corpsec/v0.9 lgl --version=0.9 proforma schemalist hw3  > proforma-schemalist-hw3.out 2> proforma-schemalist-hw3.err
+LGL_URI=http://localhost/api/corpsec/v0.9 lgl --version=0.9 proforma schemalist hw3 example  > proforma-schemalist-hw3-example.out 2> proforma-schemalist-hw3-example.err
+LGL_URI=http://localhost/api/corpsec/v0.9 lgl --version=0.9 proforma schema hw3  > proforma-schema-hw3.out 2> proforma-schema-hw3.err
+LGL_URI=http://localhost/api/corpsec/v0.9 lgl --version=0.9 proforma generate hw3 < proforma-schemalist-hw3-example.out > proforma-generate-hw3.out 2> proforma-generate-hw3.err
+cd ..
+subdir=local-v1.0; mkdir -p $subdir; cd $subdir;
+LGL_URI=http://localhost/api/corpsec/v1.0 lgl --version=0.9 proforma schemalist  > proforma-schemalist.out 2> proforma-schemalist.err
+LGL_URI=http://localhost/api/corpsec/v1.0 lgl --version=0.9 proforma schemalist hw3  > proforma-schemalist-hw3.out 2> proforma-schemalist-hw3.err
+LGL_URI=http://localhost/api/corpsec/v1.0 lgl --version=0.9 proforma schemalist hw3 example  > proforma-schemalist-hw3-example.out 2> proforma-schemalist-hw3-example.err
+LGL_URI=http://localhost/api/corpsec/v1.0 lgl --version=0.9 proforma schema hw3  > proforma-schema-hw3.out 2> proforma-schema-hw3.err
+LGL_URI=http://localhost/api/corpsec/v1.0 lgl --version=0.9 proforma generate hw3 < proforma-schemalist-hw3-example.out > proforma-generate-hw3.out 2> proforma-generate-hw3.err
+cd ..
+subdir=local-v1.1; mkdir -p $subdir; cd $subdir;
+LGL_URI=http://localhost/api/corpsec/v1.1 lgl  proforma schemalist  > proforma-schemalist.out 2> proforma-schemalist.err
+LGL_URI=http://localhost/api/corpsec/v1.1 lgl  proforma schemalist hw3  > proforma-schemalist-hw3.out 2> proforma-schemalist-hw3.err
+LGL_URI=http://localhost/api/corpsec/v1.1 lgl  proforma schemalist hw3 example  > proforma-schemalist-hw3-example.out 2> proforma-schemalist-hw3-example.err
+LGL_URI=http://localhost/api/corpsec/v1.1 lgl  proforma schema hw3  > proforma-schema-hw3.out 2> proforma-schema-hw3.err
+LGL_URI=http://localhost/api/corpsec/v1.1 lgl  proforma generate hw3 < proforma-schemalist-hw3-example.out > proforma-generate-hw3.out 2> proforma-generate-hw3.err
+LGL_URI=http://localhost/api/corpsec/v1.1 lgl  bizfile search prive  > bizfile-search-prive.out 2> bizfile-search-prive.err
+LGL_URI=http://localhost/api/corpsec/v1.1 lgl  bizfile uen 111111111M  > bizfile-uen-111111111M.out 2> bizfile-uen-111111111M.err
+cd ..
+#+end_example
+
 
 #+NAME: test-prod
 #+BEGIN_SRC sh  :shebang #!/bin/bash :noweb yes :tangle lgltest-prod.sh :exports results :results verbatim :eval no
@@ -253,7 +234,7 @@ print('lgl %s 2>&1' % (myargs))
 #+NAME: mkCapture
 #+BEGIN_SRC python :noweb yes :exports results :results output :var myargs="noargs" num=0
 dashed = myargs.replace(" ","-")
-print('lgl $1 %s > %s.out 2> %s.err' % (myargs, dashed, dashed))
+print('lgl $* > %s.out 2> %s.err' % (myargs, dashed, dashed))
 #+END_SRC
 
 The actual test script combines all of the above.
