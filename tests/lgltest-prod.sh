@@ -327,4 +327,4 @@ for binary in reference-20190903/v1.1/*.{docx,pdf};
         else echo " !! file sizes differ for api/v1.1/$filename";
              ls -l $binary api/v1.1/$filename | tee failures-api-v1.1-$filename.txt; fi; done
 onoes=""; for f in $testdir/failures-*.txt; do if [ -s $f ]; then onoes="$onoes $f"; fi; done
-if [ -n "$onoes" ]; then count=`cat $testdir/failures-*.txt | wc -l`; echo "!!! $count tests failed! $onoes"; ls -l $testdir/failures-*.txt; echo ; cat $testdir/failures-*.txt; else echo "*** all tests passed!"; fi
+if [ -n "$onoes" ]; then count=`cat $testdir/failures-*.txt | wc -l`; echo "!!! $count tests failed!"; ls -l $testdir/failures-*.txt; echo ; cat $testdir/failures-*.txt; else echo "*** all tests passed!"; fi

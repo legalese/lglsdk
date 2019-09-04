@@ -330,7 +330,7 @@ for l in liveness:
     print("             ls -l $binary %s/%s/$filename | tee failures-%s-%s-$filename.txt; fi; done" % (l[0],v[0],l[0],v[0]))
 
 print("onoes=\"\"; for f in $testdir/failures-*.txt; do if [ -s $f ]; then onoes=\"$onoes $f\"; fi; done")
-print("if [ -n \"$onoes\" ]; then count=`cat $testdir/failures-*.txt | wc -l`; echo \"!!! $count tests failed! $onoes\"; ls -l $testdir/failures-*.txt; echo ""; cat $testdir/failures-*.txt; else echo \"*** all tests passed!\"; fi");
+print("if [ -n \"$onoes\" ]; then count=`cat $testdir/failures-*.txt | wc -l`; echo \"!!! $count tests failed!\"; ls -l $testdir/failures-*.txt; echo ""; cat $testdir/failures-*.txt; else echo \"*** all tests passed!\"; fi");
 #+END_SRC
 
 #+RESULTS: diff-liveness-dirs
