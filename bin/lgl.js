@@ -668,6 +668,7 @@ function json_filename(candidate) {
     var found = findUp.sync(candidate);
     if (found) {
         // consider searching up the path, the way tsconfig.json does
+        console_error("lgl: using " + found);
         return found;
     }
     else {

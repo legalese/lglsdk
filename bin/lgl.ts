@@ -613,6 +613,7 @@ function json_filename(candidate: string): string | null {
   var found = findUp.sync(candidate)
   if (found) {
     // consider searching up the path, the way tsconfig.json does
+    console_error(`lgl: using ${found}`)
     return found
   } else {
     return null // https://medium.com/@hinchman_amanda/null-pointer-references-the-billion-dollar-mistake-1e616534d485
