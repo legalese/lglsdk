@@ -241,10 +241,15 @@ egrep -a -v "^/CreationDate|^/ID \[|^<.*> \]|^/DocChecksum" < $testdir/1a/v1.0/h
 egrep -a -v "^/CreationDate|^/ID \[|^<.*> \]|^/DocChecksum" < $testdir/1b/v1.0/hw3.pdf > $testdir/1b/v1.0/hw3.pdfsimple
 egrep -a -v "^/CreationDate|^/ID \[|^<.*> \]|^/DocChecksum" < $testdir/api/v1.0/hw3.pdf > $testdir/api/v1.0/hw3.pdfsimple
 egrep -a -v "^/CreationDate|^/ID \[|^<.*> \]|^/DocChecksum" < reference-20190903/v1.1/hw3.pdf > reference-20190903/v1.1/hw3.pdfsimple
+perl -ni -le 'print unless /datePulled/' reference-20190903/v1.1/bizfile*.out
 egrep -a -v "^/CreationDate|^/ID \[|^<.*> \]|^/DocChecksum" < $testdir/v2/v1.1/hw3.pdf > $testdir/v2/v1.1/hw3.pdfsimple
+perl -ni -le 'print unless /datePulled/' $testdir/v2/v1.1/bizfile*.out
 egrep -a -v "^/CreationDate|^/ID \[|^<.*> \]|^/DocChecksum" < $testdir/1a/v1.1/hw3.pdf > $testdir/1a/v1.1/hw3.pdfsimple
+perl -ni -le 'print unless /datePulled/' $testdir/1a/v1.1/bizfile*.out
 egrep -a -v "^/CreationDate|^/ID \[|^<.*> \]|^/DocChecksum" < $testdir/1b/v1.1/hw3.pdf > $testdir/1b/v1.1/hw3.pdfsimple
+perl -ni -le 'print unless /datePulled/' $testdir/1b/v1.1/bizfile*.out
 egrep -a -v "^/CreationDate|^/ID \[|^<.*> \]|^/DocChecksum" < $testdir/api/v1.1/hw3.pdf > $testdir/api/v1.1/hw3.pdfsimple
+perl -ni -le 'print unless /datePulled/' $testdir/api/v1.1/bizfile*.out
 
 diff -x \*.docx -x \*.pdf -x \*.run -x \*generate\*.out -qru reference-20190903/ $testdir/v2/ > $testdir/failures-v2.txt
 diff -sqru reference-20190903/ $testdir/v2/ > $testdir/identicals-v2.txt

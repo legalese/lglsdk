@@ -70,7 +70,9 @@ egrep -a -v "^/CreationDate|^/ID \[|^<.*> \]|^/DocChecksum" < $testdir/local/v0.
 egrep -a -v "^/CreationDate|^/ID \[|^<.*> \]|^/DocChecksum" < reference-20190903/v1.0/hw3.pdf > reference-20190903/v1.0/hw3.pdfsimple
 egrep -a -v "^/CreationDate|^/ID \[|^<.*> \]|^/DocChecksum" < $testdir/local/v1.0/hw3.pdf > $testdir/local/v1.0/hw3.pdfsimple
 egrep -a -v "^/CreationDate|^/ID \[|^<.*> \]|^/DocChecksum" < reference-20190903/v1.1/hw3.pdf > reference-20190903/v1.1/hw3.pdfsimple
+perl -ni -le 'print unless /datePulled/' reference-20190903/v1.1/bizfile*.out
 egrep -a -v "^/CreationDate|^/ID \[|^<.*> \]|^/DocChecksum" < $testdir/local/v1.1/hw3.pdf > $testdir/local/v1.1/hw3.pdfsimple
+perl -ni -le 'print unless /datePulled/' $testdir/local/v1.1/bizfile*.out
 
 diff -x \*.docx -x \*.pdf -x \*.run -x \*generate\*.out -qru reference-20190903/ $testdir/local/ > $testdir/failures-local.txt
 diff -sqru reference-20190903/ $testdir/local/ > $testdir/identicals-local.txt

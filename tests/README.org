@@ -297,8 +297,12 @@ print("cd ../..")
 myre = '^/CreationDate|^/ID \\[|^<.*> \\]|^/DocChecksum'
 for v in version:
   print("egrep -a -v \"%s\" < %s/%s/hw3.pdf > %s/%s/hw3.pdfsimple" % (myre, ref, v[0], ref, v[0]))
+  if v[0] == "v1.1":
+    print("perl -ni -le 'print unless /datePulled/' %s/%s/bizfile*.out" % (ref, v[0]))
   for l in liveness:
     print("egrep -a -v \"%s\" < $testdir/%s/%s/hw3.pdf > $testdir/%s/%s/hw3.pdfsimple" % (myre, l[0], v[0], l[0], v[0]))
+    if v[0] == "v1.1":
+      print("perl -ni -le 'print unless /datePulled/' $testdir/%s/%s/bizfile*.out" % (l[0],v[0]))
 #+END_SRC
 
 So we ignore any diffs complaining about ~.pdf~ and ~.docx~, and we only care about diffs complaining about ~.pdfsimple~.
