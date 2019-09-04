@@ -135,6 +135,11 @@ const URI_BASE = (process.env.LGL_URI ? process.env.LGL_URI :
         ? `https://api.legalese.com/api/corpsec/v1.1`
         : `https://api.legalese.com/api/corpsec/v1.1`)
 
+if (/(v0.9|v1.0)$/.test(URI_BASE) && argv.version == undefined) {
+  console_error(`lgl: intuiting --version=0.9 based on LGL_URI`);
+  argv.version='0.9';
+}
+
 let PROFORMA_FILETYPE = process.env.PROFORMA_FILETYPE || argv.filetype
 
 if (process.env.LGL_URI) console_error(`URI_BASE = ${URI_BASE}`)
