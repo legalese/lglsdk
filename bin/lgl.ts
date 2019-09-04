@@ -126,8 +126,6 @@ var argv = require('minimist')(process.argv, {
 
 if (argv.help || argv.h) { argv._.splice(2, 0, "help") }
 
-let templateKey = (argv.version && argv.version == "0.9") ? "filepath" : "templateKey"
-
 const LGL_VERBOSE = process.env.LGL_VERBOSE || argv.verbose || argv.v || argv.vv
 const LGL_TEST = process.env.LGL_TEST || argv.test || argv.t
 const URI_BASE = (process.env.LGL_URI ? process.env.LGL_URI :
@@ -135,14 +133,16 @@ const URI_BASE = (process.env.LGL_URI ? process.env.LGL_URI :
         ? `https://api.legalese.com/api/corpsec/v1.1`
         : `https://api.legalese.com/api/corpsec/v1.1`)
 
+let PROFORMA_FILETYPE = process.env.PROFORMA_FILETYPE || argv.filetype
+
+if (process.env.LGL_URI) console_error(`URI_BASE = ${URI_BASE}`)
 if (/(v0.9|v1.0)$/.test(URI_BASE) && argv.version == undefined) {
   console_error(`lgl: intuiting --version=0.9 based on LGL_URI`);
   argv.version='0.9';
 }
 
-let PROFORMA_FILETYPE = process.env.PROFORMA_FILETYPE || argv.filetype
+let templateKey = (argv.version && argv.version == "0.9") ? "filepath" : "templateKey"
 
-if (process.env.LGL_URI) console_error(`URI_BASE = ${URI_BASE}`)
 console_error(`templateKey = ${templateKey}`);
 function console_error(str: string) {
     if (LGL_VERBOSE) { console.error(str) }
@@ -522,10 +522,8 @@ async function run_proforma() {
                 }
             }
         }
-        try {
-            apiRequest = await rp({
-                method: 'POST', uri: URI_BASE + "/generate",
-                body: (argv.version == "0.9"
+      try {
+        let mybody = (argv.version == "0.9"
                     ? {
                         profile: profile_09, [templateKey]: arg_subsubcommand,
                         contenttype: PROFORMA_FILETYPE,
@@ -536,8 +534,12 @@ async function run_proforma() {
                         [templateKey]: arg_subsubcommand,
                         contenttype: PROFORMA_FILETYPE,
                         data: JSON.parse(fs.readFileSync(0, 'utf-8'))
-                    }
-                ),
+                    })
+        console_error(`lgl: mybody = `)
+        console_error(JSON.stringify(mybody,null,2))
+            apiRequest = await rp({
+                method: 'POST', uri: URI_BASE + "/generate",
+              body: mybody,
                 json: true
             })
             if (output_filename) { writeToFile(apiRequest[PROFORMA_FILETYPE == "pdf" ? "docPdf" : "docDocx"], output_filename, PROFORMA_FILETYPE) }

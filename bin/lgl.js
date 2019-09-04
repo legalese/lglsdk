@@ -97,20 +97,20 @@ var argv = require('minimist')(process.argv, {
 if (argv.help || argv.h) {
     argv._.splice(2, 0, "help");
 }
-var templateKey = (argv.version && argv.version == "0.9") ? "filepath" : "templateKey";
 var LGL_VERBOSE = process.env.LGL_VERBOSE || argv.verbose || argv.v || argv.vv;
 var LGL_TEST = process.env.LGL_TEST || argv.test || argv.t;
 var URI_BASE = (process.env.LGL_URI ? process.env.LGL_URI :
     LGL_TEST
         ? "https://api.legalese.com/api/corpsec/v1.1"
         : "https://api.legalese.com/api/corpsec/v1.1");
+var PROFORMA_FILETYPE = process.env.PROFORMA_FILETYPE || argv.filetype;
+if (process.env.LGL_URI)
+    console_error("URI_BASE = " + URI_BASE);
 if (/(v0.9|v1.0)$/.test(URI_BASE) && argv.version == undefined) {
     console_error("lgl: intuiting --version=0.9 based on LGL_URI");
     argv.version = '0.9';
 }
-var PROFORMA_FILETYPE = process.env.PROFORMA_FILETYPE || argv.filetype;
-if (process.env.LGL_URI)
-    console_error("URI_BASE = " + URI_BASE);
+var templateKey = (argv.version && argv.version == "0.9") ? "filepath" : "templateKey";
 console_error("templateKey = " + templateKey);
 function console_error(str) {
     if (LGL_VERBOSE) {
@@ -435,7 +435,7 @@ function run_corpsec() {
 }
 function run_proforma() {
     return __awaiter(this, void 0, void 0, function () {
-        var _a, _b, _c, _d, _e, _f, apiRequest, body, profile_09, e_5, e_6, e_7, output_filename, e_8;
+        var _a, _b, _c, _d, _e, _f, apiRequest, body, profile_09, e_5, e_6, e_7, output_filename, mybody, e_8;
         return __generator(this, function (_g) {
             switch (_g.label) {
                 case 0:
@@ -573,10 +573,13 @@ function run_proforma() {
                     _g.label = 16;
                 case 16:
                     _g.trys.push([16, 18, , 19]);
+                    mybody = (argv.version == "0.9"
+                        ? __assign((_e = { profile: profile_09 }, _e[templateKey] = arg_subsubcommand, _e.contenttype = PROFORMA_FILETYPE, _e), (JSON.parse(fs.readFileSync(0, 'utf-8')))) : __assign({}, body, (_f = {}, _f[templateKey] = arg_subsubcommand, _f.contenttype = PROFORMA_FILETYPE, _f.data = JSON.parse(fs.readFileSync(0, 'utf-8')), _f)));
+                    console_error("lgl: mybody = ");
+                    console_error(JSON.stringify(mybody, null, 2));
                     return [4 /*yield*/, rp({
                             method: 'POST', uri: URI_BASE + "/generate",
-                            body: (argv.version == "0.9"
-                                ? __assign((_e = { profile: profile_09 }, _e[templateKey] = arg_subsubcommand, _e.contenttype = PROFORMA_FILETYPE, _e), (JSON.parse(fs.readFileSync(0, 'utf-8')))) : __assign({}, body, (_f = {}, _f[templateKey] = arg_subsubcommand, _f.contenttype = PROFORMA_FILETYPE, _f.data = JSON.parse(fs.readFileSync(0, 'utf-8')), _f))),
+                            body: mybody,
                             json: true
                         })];
                 case 17:
