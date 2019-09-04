@@ -246,85 +246,85 @@ egrep -a -v "^/CreationDate|^/ID \[|^<.*> \]|^/DocChecksum" < $testdir/1a/v1.1/h
 egrep -a -v "^/CreationDate|^/ID \[|^<.*> \]|^/DocChecksum" < $testdir/1b/v1.1/hw3.pdf > $testdir/1b/v1.1/hw3.pdfsimple
 egrep -a -v "^/CreationDate|^/ID \[|^<.*> \]|^/DocChecksum" < $testdir/api/v1.1/hw3.pdf > $testdir/api/v1.1/hw3.pdfsimple
 
-diff -x \*.docx -x \*.pdf -x \*generate\*.out -qru reference-20190903/ $testdir/v2/ | egrep -v "(docx|pdf|generate-.*\.out) differ" > $testdir/failures-v2.txt
+diff -x \*.docx -x \*.pdf -x \*.run -x \*generate\*.out -qru reference-20190903/ $testdir/v2/ > $testdir/failures-v2.txt
 diff -sqru reference-20190903/ $testdir/v2/ > $testdir/identicals-v2.txt
 for binary in reference-20190903/v0.9/*.{docx,pdf};
   do filename=`basename $binary`;
      if [ $(stat -f "%z" $binary) = $(stat -f "%z" $testdir/v2/v0.9/$filename) ];
-        then :;
+        then :; # no-op
         else echo " !! file sizes differ for v2/v0.9/$filename";
              ls -l $binary v2/v0.9/$filename | tee failures-v2-v0.9-$filename.txt; fi; done
 for binary in reference-20190903/v1.0/*.{docx,pdf};
   do filename=`basename $binary`;
      if [ $(stat -f "%z" $binary) = $(stat -f "%z" $testdir/v2/v1.0/$filename) ];
-        then :;
+        then :; # no-op
         else echo " !! file sizes differ for v2/v1.0/$filename";
              ls -l $binary v2/v1.0/$filename | tee failures-v2-v1.0-$filename.txt; fi; done
 for binary in reference-20190903/v1.1/*.{docx,pdf};
   do filename=`basename $binary`;
      if [ $(stat -f "%z" $binary) = $(stat -f "%z" $testdir/v2/v1.1/$filename) ];
-        then :;
+        then :; # no-op
         else echo " !! file sizes differ for v2/v1.1/$filename";
              ls -l $binary v2/v1.1/$filename | tee failures-v2-v1.1-$filename.txt; fi; done
-diff -x \*.docx -x \*.pdf -x \*generate\*.out -qru reference-20190903/ $testdir/1a/ | egrep -v "(docx|pdf|generate-.*\.out) differ" > $testdir/failures-1a.txt
+diff -x \*.docx -x \*.pdf -x \*.run -x \*generate\*.out -qru reference-20190903/ $testdir/1a/ > $testdir/failures-1a.txt
 diff -sqru reference-20190903/ $testdir/1a/ > $testdir/identicals-1a.txt
 for binary in reference-20190903/v0.9/*.{docx,pdf};
   do filename=`basename $binary`;
      if [ $(stat -f "%z" $binary) = $(stat -f "%z" $testdir/1a/v0.9/$filename) ];
-        then :;
+        then :; # no-op
         else echo " !! file sizes differ for 1a/v0.9/$filename";
              ls -l $binary 1a/v0.9/$filename | tee failures-1a-v0.9-$filename.txt; fi; done
 for binary in reference-20190903/v1.0/*.{docx,pdf};
   do filename=`basename $binary`;
      if [ $(stat -f "%z" $binary) = $(stat -f "%z" $testdir/1a/v1.0/$filename) ];
-        then :;
+        then :; # no-op
         else echo " !! file sizes differ for 1a/v1.0/$filename";
              ls -l $binary 1a/v1.0/$filename | tee failures-1a-v1.0-$filename.txt; fi; done
 for binary in reference-20190903/v1.1/*.{docx,pdf};
   do filename=`basename $binary`;
      if [ $(stat -f "%z" $binary) = $(stat -f "%z" $testdir/1a/v1.1/$filename) ];
-        then :;
+        then :; # no-op
         else echo " !! file sizes differ for 1a/v1.1/$filename";
              ls -l $binary 1a/v1.1/$filename | tee failures-1a-v1.1-$filename.txt; fi; done
-diff -x \*.docx -x \*.pdf -x \*generate\*.out -qru reference-20190903/ $testdir/1b/ | egrep -v "(docx|pdf|generate-.*\.out) differ" > $testdir/failures-1b.txt
+diff -x \*.docx -x \*.pdf -x \*.run -x \*generate\*.out -qru reference-20190903/ $testdir/1b/ > $testdir/failures-1b.txt
 diff -sqru reference-20190903/ $testdir/1b/ > $testdir/identicals-1b.txt
 for binary in reference-20190903/v0.9/*.{docx,pdf};
   do filename=`basename $binary`;
      if [ $(stat -f "%z" $binary) = $(stat -f "%z" $testdir/1b/v0.9/$filename) ];
-        then :;
+        then :; # no-op
         else echo " !! file sizes differ for 1b/v0.9/$filename";
              ls -l $binary 1b/v0.9/$filename | tee failures-1b-v0.9-$filename.txt; fi; done
 for binary in reference-20190903/v1.0/*.{docx,pdf};
   do filename=`basename $binary`;
      if [ $(stat -f "%z" $binary) = $(stat -f "%z" $testdir/1b/v1.0/$filename) ];
-        then :;
+        then :; # no-op
         else echo " !! file sizes differ for 1b/v1.0/$filename";
              ls -l $binary 1b/v1.0/$filename | tee failures-1b-v1.0-$filename.txt; fi; done
 for binary in reference-20190903/v1.1/*.{docx,pdf};
   do filename=`basename $binary`;
      if [ $(stat -f "%z" $binary) = $(stat -f "%z" $testdir/1b/v1.1/$filename) ];
-        then :;
+        then :; # no-op
         else echo " !! file sizes differ for 1b/v1.1/$filename";
              ls -l $binary 1b/v1.1/$filename | tee failures-1b-v1.1-$filename.txt; fi; done
-diff -x \*.docx -x \*.pdf -x \*generate\*.out -qru reference-20190903/ $testdir/api/ | egrep -v "(docx|pdf|generate-.*\.out) differ" > $testdir/failures-api.txt
+diff -x \*.docx -x \*.pdf -x \*.run -x \*generate\*.out -qru reference-20190903/ $testdir/api/ > $testdir/failures-api.txt
 diff -sqru reference-20190903/ $testdir/api/ > $testdir/identicals-api.txt
 for binary in reference-20190903/v0.9/*.{docx,pdf};
   do filename=`basename $binary`;
      if [ $(stat -f "%z" $binary) = $(stat -f "%z" $testdir/api/v0.9/$filename) ];
-        then :;
+        then :; # no-op
         else echo " !! file sizes differ for api/v0.9/$filename";
              ls -l $binary api/v0.9/$filename | tee failures-api-v0.9-$filename.txt; fi; done
 for binary in reference-20190903/v1.0/*.{docx,pdf};
   do filename=`basename $binary`;
      if [ $(stat -f "%z" $binary) = $(stat -f "%z" $testdir/api/v1.0/$filename) ];
-        then :;
+        then :; # no-op
         else echo " !! file sizes differ for api/v1.0/$filename";
              ls -l $binary api/v1.0/$filename | tee failures-api-v1.0-$filename.txt; fi; done
 for binary in reference-20190903/v1.1/*.{docx,pdf};
   do filename=`basename $binary`;
      if [ $(stat -f "%z" $binary) = $(stat -f "%z" $testdir/api/v1.1/$filename) ];
-        then :;
+        then :; # no-op
         else echo " !! file sizes differ for api/v1.1/$filename";
              ls -l $binary api/v1.1/$filename | tee failures-api-v1.1-$filename.txt; fi; done
 onoes=""; for f in $testdir/failures-*.txt; do if [ -s $f ]; then onoes="$onoes $f"; fi; done
-if [ -n "$onoes" ]; then echo "!!! tests failed! $onoes"; ls -l $testdir/failures-*.txt; echo ; cat $testdir/failures-*.txt; else echo "*** all tests passed!"; fi
+if [ -n "$onoes" ]; then count=`cat $testdir/failures-*.txt | wc -l`; echo "!!! $count tests failed! $onoes"; ls -l $testdir/failures-*.txt; echo ; cat $testdir/failures-*.txt; else echo "*** all tests passed!"; fi

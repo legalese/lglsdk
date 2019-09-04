@@ -318,19 +318,19 @@ So we ignore any diffs complaining about ~.pdf~ and ~.docx~, and we only care ab
 #+BEGIN_SRC python :noweb yes :exports results :results output :var liveness=liveness_development :var ref="reference-20190903" :var version=version
 import re
 for l in liveness:
-  print("diff -x \*.docx -x \*.pdf -x \*generate\*.out -qru %s/ $testdir/%s/ | egrep -v \"(docx|pdf|generate-.*\\.out) differ\" > $testdir/failures-%s.txt" % (ref, l[0], l[0]))
+  print("diff -x \*.docx -x \*.pdf -x \*.run -x \*generate\*.out -qru %s/ $testdir/%s/ > $testdir/failures-%s.txt" % (ref, l[0], l[0]))
   print("diff -sqru %s/ $testdir/%s/ > $testdir/identicals-%s.txt" % (ref, l[0], l[0]))
   for v in version:
     print("for binary in %s/%s/*.{docx,pdf};" % (ref,v[0])) ;
     print("  do filename=`basename $binary`;")
     print("     if [ $(stat -f \"%%z\" $binary) = $(stat -f \"%%z\" $testdir/%s/%s/$filename) ];" % (l[0],v[0]))
  #  print("        then echo \" ** file sizes are the same for $filename\";")
-    print("        then :;") # no-op
+    print("        then :; # no-op")
     print("        else echo \" !! file sizes differ for %s/%s/$filename\";" % (l[0],v[0]))
     print("             ls -l $binary %s/%s/$filename | tee failures-%s-%s-$filename.txt; fi; done" % (l[0],v[0],l[0],v[0]))
 
 print("onoes=\"\"; for f in $testdir/failures-*.txt; do if [ -s $f ]; then onoes=\"$onoes $f\"; fi; done")
-print("if [ -n \"$onoes\" ]; then echo \"!!! tests failed! $onoes\"; ls -l $testdir/failures-*.txt; echo ""; cat $testdir/failures-*.txt; else echo \"*** all tests passed!\"; fi");
+print("if [ -n \"$onoes\" ]; then count=`cat $testdir/failures-*.txt | wc -l`; echo \"!!! $count tests failed! $onoes\"; ls -l $testdir/failures-*.txt; echo ""; cat $testdir/failures-*.txt; else echo \"*** all tests passed!\"; fi");
 #+END_SRC
 
 #+RESULTS: diff-liveness-dirs

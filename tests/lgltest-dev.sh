@@ -72,25 +72,25 @@ egrep -a -v "^/CreationDate|^/ID \[|^<.*> \]|^/DocChecksum" < $testdir/local/v1.
 egrep -a -v "^/CreationDate|^/ID \[|^<.*> \]|^/DocChecksum" < reference-20190903/v1.1/hw3.pdf > reference-20190903/v1.1/hw3.pdfsimple
 egrep -a -v "^/CreationDate|^/ID \[|^<.*> \]|^/DocChecksum" < $testdir/local/v1.1/hw3.pdf > $testdir/local/v1.1/hw3.pdfsimple
 
-diff -x \*.docx -x \*.pdf -x \*generate\*.out -qru reference-20190903/ $testdir/local/ | egrep -v "(docx|pdf|generate-.*\.out) differ" > $testdir/failures-local.txt
+diff -x \*.docx -x \*.pdf -x \*.run -x \*generate\*.out -qru reference-20190903/ $testdir/local/ > $testdir/failures-local.txt
 diff -sqru reference-20190903/ $testdir/local/ > $testdir/identicals-local.txt
 for binary in reference-20190903/v0.9/*.{docx,pdf};
   do filename=`basename $binary`;
      if [ $(stat -f "%z" $binary) = $(stat -f "%z" $testdir/local/v0.9/$filename) ];
-        then :;
+        then :; # no-op
         else echo " !! file sizes differ for local/v0.9/$filename";
              ls -l $binary local/v0.9/$filename | tee failures-local-v0.9-$filename.txt; fi; done
 for binary in reference-20190903/v1.0/*.{docx,pdf};
   do filename=`basename $binary`;
      if [ $(stat -f "%z" $binary) = $(stat -f "%z" $testdir/local/v1.0/$filename) ];
-        then :;
+        then :; # no-op
         else echo " !! file sizes differ for local/v1.0/$filename";
              ls -l $binary local/v1.0/$filename | tee failures-local-v1.0-$filename.txt; fi; done
 for binary in reference-20190903/v1.1/*.{docx,pdf};
   do filename=`basename $binary`;
      if [ $(stat -f "%z" $binary) = $(stat -f "%z" $testdir/local/v1.1/$filename) ];
-        then :;
+        then :; # no-op
         else echo " !! file sizes differ for local/v1.1/$filename";
              ls -l $binary local/v1.1/$filename | tee failures-local-v1.1-$filename.txt; fi; done
 onoes=""; for f in $testdir/failures-*.txt; do if [ -s $f ]; then onoes="$onoes $f"; fi; done
-if [ -n "$onoes" ]; then echo "!!! tests failed! $onoes"; ls -l $testdir/failures-*.txt; echo ; cat $testdir/failures-*.txt; else echo "*** all tests passed!"; fi
+if [ -n "$onoes" ]; then count=`cat $testdir/failures-*.txt | wc -l`; echo "!!! $count tests failed! $onoes"; ls -l $testdir/failures-*.txt; echo ; cat $testdir/failures-*.txt; else echo "*** all tests passed!"; fi
