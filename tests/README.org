@@ -250,8 +250,6 @@ cd ../..
 <<diff-liveness-dirs(liveness=liveness_development)>>
 #+END_SRC
 
-TODO: find a way to refactor the above two to just split on the difference between production and development. but it's not so simple.
-
 #+NAME: lgl
 #+BEGIN_SRC python :noweb yes :exports results :results output :var myargs="help"
 print('lgl %s 2>&1' % (myargs))
@@ -306,6 +304,8 @@ for v in version:
 #+END_SRC
 
 So we ignore any diffs complaining about ~.pdf~ and ~.docx~, and we only care about diffs complaining about ~.pdfsimple~.
+
+And we get rid of datePulled from the bizfile output.
 
 #+RESULTS: test-diff
 : cd ../..

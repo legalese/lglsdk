@@ -435,7 +435,8 @@ function run_corpsec() {
 }
 function run_proforma() {
     return __awaiter(this, void 0, void 0, function () {
-        var _a, _b, _c, _d, _e, _f, apiRequest, body, profile_09, e_5, e_6, e_7, output_filename, mybody, e_8;
+        var apiRequest, body, profile_09, e_5, e_6, e_7, output_filename, mybody, e_8;
+        var _a, _b, _c, _d, _e, _f;
         return __generator(this, function (_g) {
             switch (_g.label) {
                 case 0:
