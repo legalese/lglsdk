@@ -143,29 +143,28 @@ if (/(v0.9|v1.0)$/.test(URI_BASE) && argv.version == undefined) {
 
 let templateKey = (argv.version && argv.version == "0.9") ? "filepath" : "templateKey"
 
-console_error(`templateKey = ${templateKey}`);
+if (argv.vv) { console_error(`templateKey = ${templateKey}`); }
 function console_error(str: string) {
     if (LGL_VERBOSE) { console.error(str) }
 }
 
 var arg_command = argv._[2];
-console_error(`command: ${arg_command}`);
+if (argv.vv) { console_error(`command: ${arg_command}`); }
 var arg_subcommand = argv._[3];
-if (arg_subcommand) {
+if (arg_subcommand && argv.vv) {
     console_error(`subcommand: ${arg_subcommand}`);
 }
 var arg_subsubcommand = argv._[4];
-if (arg_subsubcommand) {
+if (arg_subsubcommand && argv.vv) {
     console_error(`subsubcommand: ${arg_subsubcommand}`);
 }
 var arg_subsubsubcommand = argv._[5];
 
-console_error(argv);
+if (argv.vv) { console_error(argv); }
 
 let config_file: string | null
 config_file = argv.config || "lglconfig.json"
 const config_found = json_filename(<string>config_file)
-console_error(`identified config_file as ${config_file}, config_found=${config_found}`)
 
 interface Config {
     email?: string;
@@ -388,14 +387,14 @@ async function run_corpsec() {
     if (arg_subcommand == 'search') {
         const searchString = argv._.slice(4, argv.length).join(' ')
         try {
-            apiRequest = await rp({
+          apiRequest = await rp(showRP({
                 method: 'POST', uri: `${URI_BASE}/bizfile/search`,
                 body: {
                     searchString: searchString,
                     test: LGL_TEST ? true : false
                 },
                 json: true
-            })
+          }))
             const toreturn = JSON.parse(apiRequest)
             const mapped = _.flatMap(toreturn, u => { return { [u.uen]: u.entity_name } })
             console.log(mapped)
@@ -405,7 +404,7 @@ async function run_corpsec() {
     else if (arg_subcommand == 'uen') {
         const searchString = argv._.slice(4, argv.length).join(' ')
         try {
-            apiRequest = await rp({
+          apiRequest = await rp(showRP({
                 method: 'POST', uri: `${URI_BASE}/bizfile/uen`,
                 body: {
                     uen: searchString,
@@ -415,7 +414,7 @@ async function run_corpsec() {
                     v01_api_key: LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key
                 },
                 json: true
-            })
+          }))
           console.log(JSON.stringify(apiRequest,null,2))
 
         } catch (e) { console.error(`lgl: error while calling API /bizfile`); console.error(e); process.exit(1); }
@@ -447,11 +446,11 @@ async function run_proforma() {
     //
     if (arg_subcommand == "schemalist") {
         try {
-            apiRequest = await rp({
+          apiRequest = await rp(showRP({
                 method: 'POST', uri: URI_BASE + "/schemalist",
                 body: argv.version == "0.9" ? { profile: profile_09 } : body,
                 json: true
-            })
+          }))
 
             if (arg_subsubcommand) {
                 // grep for this.about.templateKey == subsubcommand
@@ -476,11 +475,11 @@ async function run_proforma() {
     else if (arg_subcommand == "schema") {
         if (!arg_subsubcommand) { console.log("lgl proforma schema <templateKey>"); process.exit(1) }
         try {
-            apiRequest = await rp({
+          apiRequest = await rp(showRP({
                 method: 'POST', uri: URI_BASE + "/schema",
                 body: argv.version == "0.9" ? { profile: profile_09, [templateKey]: arg_subsubcommand } : { ...body, [templateKey]: arg_subsubcommand }
                 , json: true
-            })
+          }))
             console.log(JSON.stringify(apiRequest, null, 2))
         }
         catch (e) { console.error(`lgl: error while calling API /schema`); console.error(e); process.exit(1); }
@@ -491,13 +490,13 @@ async function run_proforma() {
     else if (arg_subcommand == "validate") {
         if (!arg_subsubcommand) { console.log("lgl proforma validate <templateKey>"); process.exit(1) }
         try {
-            apiRequest = await rp({
+          apiRequest = await rp(showRP({
                 method: 'POST', uri: URI_BASE + "/validate",
                 body: (argv.version == "0.9"
                     ? { profile: profile_09, [templateKey]: arg_subsubcommand, data: JSON.parse(fs.readFileSync(0, 'utf-8')) }
                     : { ...body, [templateKey]: arg_subsubcommand, data: JSON.parse(fs.readFileSync(0, 'utf-8')) })
                 , json: true
-            })
+          }))
             console.log(JSON.stringify(apiRequest, null, 2))
         }
         catch (e) { console.error(`lgl: error while calling API /validate`); console.error(e); process.exit(1); }
@@ -537,11 +536,11 @@ async function run_proforma() {
                     })
         console_error(`lgl: mybody = `)
         console_error(JSON.stringify(mybody,null,2))
-            apiRequest = await rp({
+        apiRequest = await rp(showRP({
                 method: 'POST', uri: URI_BASE + "/generate",
               body: mybody,
                 json: true
-            })
+        }))
             if (output_filename) { writeToFile(apiRequest[PROFORMA_FILETYPE == "pdf" ? "docPdf" : "docDocx"], output_filename, PROFORMA_FILETYPE) }
             else {
                 console.log(JSON.stringify(apiRequest, null, 2))
@@ -563,7 +562,7 @@ async function run_proforma() {
 async function run_workflow() {
     let apiRequest
     try {
-        apiRequest = await rp({
+      apiRequest = await rp(showRP({
             method: 'POST', uri: URI_BASE + `/workflow/${arg_subcommand}`,
             body: {
 		email: config.email,
@@ -572,7 +571,7 @@ async function run_workflow() {
 		data: JSON.parse(fs.readFileSync(0, 'utf-8'))
 	    },
             json: true
-        })
+      }))
 
         console.log(JSON.stringify(apiRequest, null, 2))
     }
@@ -597,8 +596,7 @@ function load_json(filename: string): object | undefined {
     let config
     try {
         config = JSON.parse(fs.readFileSync(filename, 'utf-8'))
-        console_error(`loaded json from ${filename}`);
-        console_error(config)
+      if (argv.vv) console_error(config)
     }
     catch (e) {
         console_error(`unable to load json file ${filename}: ${e}`);
@@ -620,7 +618,7 @@ function json_filename(candidate: string): string | null {
   var found = findUp.sync(candidate)
   if (found) {
     // consider searching up the path, the way tsconfig.json does
-    console_error(`lgl: using ${found}`)
+    if (argv.vv) console_error(`lgl: using ${found}`)
     return found
   } else {
     return null // https://medium.com/@hinchman_amanda/null-pointer-references-the-billion-dollar-mistake-1e616534d485
@@ -635,3 +633,9 @@ function writeToFile(parsed: string, filename: string, filetype = 'pdf') {
         case 'docx': fs.writeFileSync(filename, parsed, 'base64')
     }
 }
+
+function showRP (query: any) : any {
+  console_error(query);
+  return query;
+}
+

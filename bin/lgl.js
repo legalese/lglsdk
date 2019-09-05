@@ -111,28 +111,33 @@ if (/(v0.9|v1.0)$/.test(URI_BASE) && argv.version == undefined) {
     argv.version = '0.9';
 }
 var templateKey = (argv.version && argv.version == "0.9") ? "filepath" : "templateKey";
-console_error("templateKey = " + templateKey);
+if (argv.vv) {
+    console_error("templateKey = " + templateKey);
+}
 function console_error(str) {
     if (LGL_VERBOSE) {
         console.error(str);
     }
 }
 var arg_command = argv._[2];
-console_error("command: " + arg_command);
+if (argv.vv) {
+    console_error("command: " + arg_command);
+}
 var arg_subcommand = argv._[3];
-if (arg_subcommand) {
+if (arg_subcommand && argv.vv) {
     console_error("subcommand: " + arg_subcommand);
 }
 var arg_subsubcommand = argv._[4];
-if (arg_subsubcommand) {
+if (arg_subsubcommand && argv.vv) {
     console_error("subsubcommand: " + arg_subsubcommand);
 }
 var arg_subsubsubcommand = argv._[5];
-console_error(argv);
+if (argv.vv) {
+    console_error(argv);
+}
 var config_file;
 config_file = argv.config || "lglconfig.json";
 var config_found = json_filename(config_file);
-console_error("identified config_file as " + config_file + ", config_found=" + config_found);
 var config;
 if (config_found != undefined) {
     config = load_json(config_found);
@@ -377,14 +382,14 @@ function run_corpsec() {
                     _a.label = 1;
                 case 1:
                     _a.trys.push([1, 3, , 4]);
-                    return [4 /*yield*/, rp({
+                    return [4 /*yield*/, rp(showRP({
                             method: 'POST', uri: URI_BASE + "/bizfile/search",
                             body: {
                                 searchString: searchString,
                                 test: LGL_TEST ? true : false
                             },
                             json: true
-                        })];
+                        }))];
                 case 2:
                     apiRequest = _a.sent();
                     toreturn = JSON.parse(apiRequest);
@@ -407,7 +412,7 @@ function run_corpsec() {
                     _a.label = 6;
                 case 6:
                     _a.trys.push([6, 8, , 9]);
-                    return [4 /*yield*/, rp({
+                    return [4 /*yield*/, rp(showRP({
                             method: 'POST', uri: URI_BASE + "/bizfile/uen",
                             body: {
                                 uen: searchString,
@@ -417,7 +422,7 @@ function run_corpsec() {
                                 v01_api_key: LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key
                             },
                             json: true
-                        })];
+                        }))];
                 case 7:
                     apiRequest = _a.sent();
                     console.log(JSON.stringify(apiRequest, null, 2));
@@ -435,8 +440,7 @@ function run_corpsec() {
 }
 function run_proforma() {
     return __awaiter(this, void 0, void 0, function () {
-        var apiRequest, body, profile_09, e_5, e_6, e_7, output_filename, mybody, e_8;
-        var _a, _b, _c, _d, _e, _f;
+        var _a, _b, _c, _d, _e, _f, apiRequest, body, profile_09, e_5, e_6, e_7, output_filename, mybody, e_8;
         return __generator(this, function (_g) {
             switch (_g.label) {
                 case 0:
@@ -457,11 +461,11 @@ function run_proforma() {
                     _g.label = 1;
                 case 1:
                     _g.trys.push([1, 3, , 4]);
-                    return [4 /*yield*/, rp({
+                    return [4 /*yield*/, rp(showRP({
                             method: 'POST', uri: URI_BASE + "/schemalist",
                             body: argv.version == "0.9" ? { profile: profile_09 } : body,
                             json: true
-                        })];
+                        }))];
                 case 2:
                     apiRequest = _g.sent();
                     if (arg_subsubcommand) {
@@ -494,11 +498,11 @@ function run_proforma() {
                     _g.label = 6;
                 case 6:
                     _g.trys.push([6, 8, , 9]);
-                    return [4 /*yield*/, rp({
+                    return [4 /*yield*/, rp(showRP({
                             method: 'POST', uri: URI_BASE + "/schema",
                             body: argv.version == "0.9" ? (_a = { profile: profile_09 }, _a[templateKey] = arg_subsubcommand, _a) : __assign({}, body, (_b = {}, _b[templateKey] = arg_subsubcommand, _b)),
                             json: true
-                        })];
+                        }))];
                 case 7:
                     apiRequest = _g.sent();
                     console.log(JSON.stringify(apiRequest, null, 2));
@@ -519,12 +523,12 @@ function run_proforma() {
                     _g.label = 11;
                 case 11:
                     _g.trys.push([11, 13, , 14]);
-                    return [4 /*yield*/, rp({
+                    return [4 /*yield*/, rp(showRP({
                             method: 'POST', uri: URI_BASE + "/validate",
                             body: (argv.version == "0.9"
                                 ? (_c = { profile: profile_09 }, _c[templateKey] = arg_subsubcommand, _c.data = JSON.parse(fs.readFileSync(0, 'utf-8')), _c) : __assign({}, body, (_d = {}, _d[templateKey] = arg_subsubcommand, _d.data = JSON.parse(fs.readFileSync(0, 'utf-8')), _d))),
                             json: true
-                        })];
+                        }))];
                 case 12:
                     apiRequest = _g.sent();
                     console.log(JSON.stringify(apiRequest, null, 2));
@@ -578,11 +582,11 @@ function run_proforma() {
                         ? __assign((_e = { profile: profile_09 }, _e[templateKey] = arg_subsubcommand, _e.contenttype = PROFORMA_FILETYPE, _e), (JSON.parse(fs.readFileSync(0, 'utf-8')))) : __assign({}, body, (_f = {}, _f[templateKey] = arg_subsubcommand, _f.contenttype = PROFORMA_FILETYPE, _f.data = JSON.parse(fs.readFileSync(0, 'utf-8')), _f)));
                     console_error("lgl: mybody = ");
                     console_error(JSON.stringify(mybody, null, 2));
-                    return [4 /*yield*/, rp({
+                    return [4 /*yield*/, rp(showRP({
                             method: 'POST', uri: URI_BASE + "/generate",
                             body: mybody,
                             json: true
-                        })];
+                        }))];
                 case 17:
                     apiRequest = _g.sent();
                     if (output_filename) {
@@ -611,7 +615,7 @@ function run_workflow() {
             switch (_a.label) {
                 case 0:
                     _a.trys.push([0, 2, , 3]);
-                    return [4 /*yield*/, rp({
+                    return [4 /*yield*/, rp(showRP({
                             method: 'POST', uri: URI_BASE + ("/workflow/" + arg_subcommand),
                             body: {
                                 email: config.email,
@@ -620,7 +624,7 @@ function run_workflow() {
                                 data: JSON.parse(fs.readFileSync(0, 'utf-8'))
                             },
                             json: true
-                        })];
+                        }))];
                 case 1:
                     apiRequest = _a.sent();
                     console.log(JSON.stringify(apiRequest, null, 2));
@@ -654,8 +658,8 @@ function load_json(filename) {
     var config;
     try {
         config = JSON.parse(fs.readFileSync(filename, 'utf-8'));
-        console_error("loaded json from " + filename);
-        console_error(config);
+        if (argv.vv)
+            console_error(config);
     }
     catch (e) {
         console_error("unable to load json file " + filename + ": " + e);
@@ -676,7 +680,8 @@ function json_filename(candidate) {
     var found = findUp.sync(candidate);
     if (found) {
         // consider searching up the path, the way tsconfig.json does
-        console_error("lgl: using " + found);
+        if (argv.vv)
+            console_error("lgl: using " + found);
         return found;
     }
     else {
@@ -693,4 +698,8 @@ function writeToFile(parsed, filename, filetype) {
         case 'pdf':
         case 'docx': fs.writeFileSync(filename, parsed, 'base64');
     }
+}
+function showRP(query) {
+    console_error(query);
+    return query;
 }
