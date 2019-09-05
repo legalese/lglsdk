@@ -1,6 +1,6 @@
 {
    "name": "@legalese/lglsdk",
-   "version": "0.9.12",
+   "version": "0.9.13",
    "description": "SDK for the Legalese API",
    "main": "index.js",
    "scripts": {

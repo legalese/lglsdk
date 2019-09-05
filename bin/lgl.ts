@@ -143,24 +143,28 @@ if (/(v0.9|v1.0)$/.test(URI_BASE) && argv.version == undefined) {
 
 let templateKey = (argv.version && argv.version == "0.9") ? "filepath" : "templateKey"
 
-if (argv.vv) { console_error(`templateKey = ${templateKey}`); }
-function console_error(str: string) {
-    if (LGL_VERBOSE) { console.error(str) }
+console_error(`templateKey = ${templateKey}`,2)
+function console_error(str: string, verbosity=1) {
+    if ((verbosity == 2 && argv.vv)
+        ||
+        (verbosity == 1 && LGL_VERBOSE)) {
+        console.error(str)
+    }
 }
 
 var arg_command = argv._[2];
-if (argv.vv) { console_error(`command: ${arg_command}`); }
+console_error(`command: ${arg_command}`, 2);
 var arg_subcommand = argv._[3];
-if (arg_subcommand && argv.vv) {
-    console_error(`subcommand: ${arg_subcommand}`);
+if (arg_subcommand) {
+    console_error(`subcommand: ${arg_subcommand}`, 2);
 }
 var arg_subsubcommand = argv._[4];
-if (arg_subsubcommand && argv.vv) {
-    console_error(`subsubcommand: ${arg_subsubcommand}`);
+if (arg_subsubcommand) {
+    console_error(`subsubcommand: ${arg_subsubcommand}`, 2);
 }
 var arg_subsubsubcommand = argv._[5];
 
-if (argv.vv) { console_error(argv); }
+console_error(argv,2);
 
 let config_file: string | null
 config_file = argv.config || "lglconfig.json"
@@ -433,7 +437,7 @@ async function run_proforma() {
         email: config.email, user_id: config.user_id,
         v01_api_key: LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key
     }
-  if (config.auth0_prefix) { body['auth0_prefix'] = config.auth0_prefix; console_error(`sending auth0_prefix ${config.auth0_prefix}`) }
+    if (config.auth0_prefix) { body['auth0_prefix'] = config.auth0_prefix; console_error(`sending auth0_prefix ${config.auth0_prefix}`, 2) }
     // for version 0.9 and 1.0
     let profile_09 = {
         email: config.email,
@@ -596,7 +600,7 @@ function load_json(filename: string): object | undefined {
     let config
     try {
         config = JSON.parse(fs.readFileSync(filename, 'utf-8'))
-      if (argv.vv) console_error(config)
+        console_error(config,2)
     }
     catch (e) {
         console_error(`unable to load json file ${filename}: ${e}`);
@@ -607,7 +611,7 @@ function load_json(filename: string): object | undefined {
 function json_filename(candidate: string): string | null {
   // if user explicitly runs --config=somefile.json, don't findUp; expect the config path to specify the file exactly
   if (argv.config) {
-    console_error(`json_filename: argv.config seems to be true`)
+      console_error(`json_filename: argv.config seems to be true`, 2)
     if (fs.existsSync(argv.config)) {
       return argv.config
     }
@@ -618,7 +622,7 @@ function json_filename(candidate: string): string | null {
   var found = findUp.sync(candidate)
   if (found) {
     // consider searching up the path, the way tsconfig.json does
-    if (argv.vv) console_error(`lgl: using ${found}`)
+    console_error(`lgl: using ${found}`,2)
     return found
   } else {
     return null // https://medium.com/@hinchman_amanda/null-pointer-references-the-billion-dollar-mistake-1e616534d485
