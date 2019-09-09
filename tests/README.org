@@ -404,7 +404,7 @@ if [ "" = "$1" ]; then
 else
   echo "*** performing extended proforma tests; first, displacing $1 into lglconfig.json"
   mkdir -p extended
-  cp $1 extended/lglconfig.json
+  cp ../../$1 extended/lglconfig.json
   cd extended
 
   lgl proforma schemalist > proforma-schemalist.out
