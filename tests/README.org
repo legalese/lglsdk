@@ -246,6 +246,7 @@ cd ../..
 <<lgltest-setup-common>>
 <<basics>>
 <<range-liveness-version(liveness=liveness_development)>>
+<<extended_proforma_testing>>
 <<test-diff(liveness=liveness_development)>>
 <<diff-liveness-dirs(liveness=liveness_development)>>
 #+END_SRC
@@ -308,13 +309,7 @@ So we ignore any diffs complaining about ~.pdf~ and ~.docx~, and we only care ab
 And we get rid of datePulled from the bizfile output.
 
 #+RESULTS: test-diff
-: cd ../..
-: egrep -a -v "^/CreationDate|^/ID \[|^<.*> \]|^/DocChecksum" < reference-20190903/v0.9/hw3.pdf > reference-20190903/v0.9/hw3.pdfsimple
-: egrep -a -v "^/CreationDate|^/ID \[|^<.*> \]|^/DocChecksum" < $testdir/local/v0.9/hw3.pdf > $testdir/local/v0.9/hw3.pdfsimple
-: egrep -a -v "^/CreationDate|^/ID \[|^<.*> \]|^/DocChecksum" < reference-20190903/v1.0/hw3.pdf > reference-20190903/v1.0/hw3.pdfsimple
-: egrep -a -v "^/CreationDate|^/ID \[|^<.*> \]|^/DocChecksum" < $testdir/local/v1.0/hw3.pdf > $testdir/local/v1.0/hw3.pdfsimple
-: egrep -a -v "^/CreationDate|^/ID \[|^<.*> \]|^/DocChecksum" < reference-20190903/v1.1/hw3.pdf > reference-20190903/v1.1/hw3.pdfsimple
-: egrep -a -v "^/CreationDate|^/ID \[|^<.*> \]|^/DocChecksum" < $testdir/local/v1.1/hw3.pdf > $testdir/local/v1.1/hw3.pdfsimple
+: hello, world
 
 **** Comparing each directory
 
@@ -396,6 +391,44 @@ The test suite directly calls the library functions exposed by the SDK. Most of 
 The server-side API endpoints are implicitly tested as part of the tests of the library and lgl executable.
 
 In future, we could do curl-based testing if an independent channel of coverage is desired.
+
+** Extended Endpoint Testing
+
+Next we load in an lglconfig.json which was not created by a ~-t init~. Rather, this is an lglconfig.json which you created yourself through a normal ~lgl init~. You then signed up for a paying product plan which gives you access to more templates.
+
+#+NAME: extended_proforma_testing
+#+BEGIN_SRC sh :noweb yes :shebang #!/bin/bash :exports results :results output :tangle extended.sh
+
+if [ "" = "$1" ]; then
+  echo "*** no live lglconfig.json specified on command line; skipping extended proforma tests";
+else
+  echo "*** performing extended proforma tests; first, displacing $1 into lglconfig.json"
+  mkdir -p extended
+  cp $1 extended/lglconfig.json
+  cd extended
+
+  lgl proforma schemalist > proforma-schemalist.out
+  echo "*** extended proforma tests: will try to generate PDFs for " `json -ak < proforma-schemalist.out | wc -l` templates
+
+  for templateKey in $(json -ak < proforma-schemalist.out); do
+    echo "*** $templateKey"
+    lgl proforma schemalist $templateKey > schemalist-$templateKey.out
+    lgl proforma schemalist $templateKey example > schemalist-$templateKey-example.out
+    lgl proforma generate $templateKey generate-$templateKey.pdf < schemalist-$templateKey-example.out > generate-$templateKey.out 2> generate-$templateKey.err
+
+    if [ ! -s generate-$templateKey.pdf ]; then
+      echo "outcome unsatisfactory: lgl proforma generate $templateKey generate-$templateKey.pdf < schemalist-$templateKey-example.out" > ../failures-extended-generate-$templateKey.txt
+    fi;
+  done;
+
+  cd ..
+fi
+#+END_SRC
+
+#+RESULTS: expanded_testing
+: *** no ; skipping extended proforma tests
+
+foreach endpoint, retrieve the example; then feed that example to validate and see if it works. feed that example to generate and see if it works.
 
 * Emacs Notes
 

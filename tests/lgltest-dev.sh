@@ -64,6 +64,31 @@ echo LGL_URI=http://localhost/api/corpsec/v1.1 lgl  bizfile uen 111111111M  > bi
 LGL_URI=http://localhost/api/corpsec/v1.1 lgl  bizfile uen 111111111M  > bizfile-uen-111111111M.out 2> bizfile-uen-111111111M.err
 cd ../..
 
+
+if [ "" = "$1" ]; then
+  echo "*** no live lglconfig.json specified on command line; skipping extended proforma tests";
+else
+  echo "*** performing extended proforma tests; first, displacing $1 into lglconfig.json"
+  mkdir -p extended
+  cp $1 extended/lglconfig.json
+  cd extended
+
+  lgl proforma schemalist > proforma-schemalist.out
+  echo "*** extended proforma tests: will try to generate PDFs for " `json -ak < proforma-schemalist.out | wc -l` templates
+
+  for templateKey in $(json -ak < proforma-schemalist.out); do
+    echo "*** $templateKey"
+    lgl proforma schemalist $templateKey > schemalist-$templateKey.out
+    lgl proforma schemalist $templateKey example > schemalist-$templateKey-example.out
+    lgl proforma generate $templateKey generate-$templateKey.pdf < schemalist-$templateKey-example.out > generate-$templateKey.out 2> generate-$templateKey.err
+
+    if [ ! -s generate-$templateKey.pdf ]; then
+      echo "outcome unsatisfactory: lgl proforma generate $templateKey generate-$templateKey.pdf < schemalist-$templateKey-example.out" > ../failures-extended-generate-$templateKey.txt
+    fi;
+  done;
+
+  cd ..
+fi
 cd ../..
 egrep -a -v "^/CreationDate|^/ID \[|^<.*> \]|^/DocChecksum" < reference-20190903/v0.9/hw3.pdf > reference-20190903/v0.9/hw3.pdfsimple
 egrep -a -v "^/CreationDate|^/ID \[|^<.*> \]|^/DocChecksum" < $testdir/local/v0.9/hw3.pdf > $testdir/local/v0.9/hw3.pdfsimple
