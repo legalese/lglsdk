@@ -77,7 +77,7 @@ else
   echo "*** extended proforma tests: will try to generate PDFs for " `json -ak < proforma-schemalist.out | wc -l` templates
 
   for templateKey in $(json -ak < proforma-schemalist.out); do
-    echo "*** $templateKey"
+    echo "  * $templateKey"
     lgl proforma schemalist $templateKey > schemalist-$templateKey.out
     lgl proforma schemalist $templateKey example > schemalist-$templateKey-example.out
     lgl proforma generate $templateKey generate-$templateKey.pdf < schemalist-$templateKey-example.out > generate-$templateKey.out 2> generate-$templateKey.err
