@@ -452,7 +452,8 @@ function run_proforma() {
                     profile_09 = {
                         email: config.email,
                         identities: [{ user_id: config.user_id }],
-                        v01_api_key: LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key
+                        v01_api_key: LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key,
+                        auth0_prefix: config.auth0_prefix ? config.auth0_prefix : ''
                     };
                     if (!(arg_subcommand == "schemalist")) return [3 /*break*/, 5];
                     _g.label = 1;
@@ -548,12 +549,12 @@ function run_proforma() {
                         switch (arg_subsubsubcommand) {
                             case "pdf": {
                                 PROFORMA_FILETYPE = "pdf";
-                                output_filename = templateKey + "-" + Date.now() + "." + PROFORMA_FILETYPE;
+                                output_filename = arg_subsubcommand + "-" + Date.now() + "." + PROFORMA_FILETYPE;
                                 break;
                             }
                             case "docx": {
                                 PROFORMA_FILETYPE = "docx";
-                                output_filename = templateKey + "-" + Date.now() + "." + PROFORMA_FILETYPE;
+                                output_filename = arg_subsubcommand + "-" + Date.now() + "." + PROFORMA_FILETYPE;
                                 break;
                             }
                             case null: {
