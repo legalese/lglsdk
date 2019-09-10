@@ -587,7 +587,10 @@ function run_proforma() {
                         }))];
                 case 17:
                     apiRequest = _g.sent();
-                    if (output_filename) {
+                    if (apiRequest.type == 'error') {
+                        console.log(JSON.stringify(apiRequest, null, 2));
+                    }
+                    else if (output_filename) {
                         writeToFile(apiRequest[PROFORMA_FILETYPE == "pdf" ? "docPdf" : "docDocx"], output_filename, PROFORMA_FILETYPE);
                     }
                     else {

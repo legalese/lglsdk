@@ -546,11 +546,13 @@ async function run_proforma() {
               body: mybody,
                 json: true
         }))
-            if (output_filename) { writeToFile(apiRequest[PROFORMA_FILETYPE == "pdf" ? "docPdf" : "docDocx"], output_filename, PROFORMA_FILETYPE) }
-            else {
-                console.log(JSON.stringify(apiRequest, null, 2))
-            }
-        }
+	  if (apiRequest.type == 'error') {
+	      console.log(JSON.stringify(apiRequest, null, 2))
+	  } else if (output_filename) { writeToFile(apiRequest[PROFORMA_FILETYPE == "pdf" ? "docPdf" : "docDocx"], output_filename, PROFORMA_FILETYPE) }
+          else {
+              console.log(JSON.stringify(apiRequest, null, 2))
+          }
+      }
         catch (e) { console.error(`lgl: error while calling API /generate`); console.error(e); process.exit(1); }
 
     }
