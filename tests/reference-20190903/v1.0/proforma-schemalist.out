@@ -1,4 +1,9 @@
 {
-  "change-of-secretary": "Change of Secretary",
+  "example1a": "Example Template One Alpha",
+  "example1b": "Example Template One Beta",
+  "example1c": "Example Template One C",
+  "example1d": "Example Template One D",
+  "example1e": "Example Template One E",
+  "example1f": "Example Template One F",
   "hw3": "Hello World 3"
 }
