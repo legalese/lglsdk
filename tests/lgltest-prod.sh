@@ -5,6 +5,14 @@ testdir=testruns/`date +%Y%m%d-%H%M%S`
 echo "*** saving to $testdir"
 mkdir -p $testdir
 cd $testdir
+################################################## extended endpoint testing, top
+if [ "" = "$1" ]; then
+  echo "*** no live lglconfig.json specified on command line; will skip extended proforma tests";
+else
+  echo " ** will perform extended proforma tests later"
+fi
+
+# back to basics
 lgl help > help.out 2> help.err
 lgl init -t > init--t.out 2> init--t.err
 
@@ -65,6 +73,8 @@ echo   LGL_URI=https://legalese.com/api/corpsec/v1.1 lgl  bizfile search prive  
 lgl  bizfile search prive  > bizfile-search-prive.out 2> bizfile-search-prive.err
 echo   LGL_URI=https://legalese.com/api/corpsec/v1.1 lgl  bizfile uen 111111111M  > bizfile-uen-111111111M.run
 lgl  bizfile uen 111111111M  > bizfile-uen-111111111M.out 2> bizfile-uen-111111111M.err
+echo   LGL_URI=https://legalese.com/api/corpsec/v1.1 lgl  bizfile uen 201527692R  > bizfile-uen-201527692R.run
+lgl  bizfile uen 201527692R  > bizfile-uen-201527692R.out 2> bizfile-uen-201527692R.err
 cd ../..
 subdir=1a/v0.9; mkdir -p $subdir; cd $subdir;
 echo "*** testing 1a/v0.9"
@@ -123,6 +133,8 @@ echo   LGL_URI=https://ap-southeast-1a-api.legalese.com/api/corpsec/v1.1 lgl  bi
 lgl  bizfile search prive  > bizfile-search-prive.out 2> bizfile-search-prive.err
 echo   LGL_URI=https://ap-southeast-1a-api.legalese.com/api/corpsec/v1.1 lgl  bizfile uen 111111111M  > bizfile-uen-111111111M.run
 lgl  bizfile uen 111111111M  > bizfile-uen-111111111M.out 2> bizfile-uen-111111111M.err
+echo   LGL_URI=https://ap-southeast-1a-api.legalese.com/api/corpsec/v1.1 lgl  bizfile uen 201527692R  > bizfile-uen-201527692R.run
+lgl  bizfile uen 201527692R  > bizfile-uen-201527692R.out 2> bizfile-uen-201527692R.err
 cd ../..
 subdir=1b/v0.9; mkdir -p $subdir; cd $subdir;
 echo "*** testing 1b/v0.9"
@@ -181,6 +193,8 @@ echo   LGL_URI=https://ap-southeast-1b-api.legalese.com/api/corpsec/v1.1 lgl  bi
 lgl  bizfile search prive  > bizfile-search-prive.out 2> bizfile-search-prive.err
 echo   LGL_URI=https://ap-southeast-1b-api.legalese.com/api/corpsec/v1.1 lgl  bizfile uen 111111111M  > bizfile-uen-111111111M.run
 lgl  bizfile uen 111111111M  > bizfile-uen-111111111M.out 2> bizfile-uen-111111111M.err
+echo   LGL_URI=https://ap-southeast-1b-api.legalese.com/api/corpsec/v1.1 lgl  bizfile uen 201527692R  > bizfile-uen-201527692R.run
+lgl  bizfile uen 201527692R  > bizfile-uen-201527692R.out 2> bizfile-uen-201527692R.err
 cd ../..
 subdir=api/v0.9; mkdir -p $subdir; cd $subdir;
 echo "*** testing api/v0.9"
@@ -239,11 +253,13 @@ echo   LGL_URI=https://api.legalese.com/api/corpsec/v1.1 lgl  bizfile search pri
 lgl  bizfile search prive  > bizfile-search-prive.out 2> bizfile-search-prive.err
 echo   LGL_URI=https://api.legalese.com/api/corpsec/v1.1 lgl  bizfile uen 111111111M  > bizfile-uen-111111111M.run
 lgl  bizfile uen 111111111M  > bizfile-uen-111111111M.out 2> bizfile-uen-111111111M.err
+echo   LGL_URI=https://api.legalese.com/api/corpsec/v1.1 lgl  bizfile uen 201527692R  > bizfile-uen-201527692R.run
+lgl  bizfile uen 201527692R  > bizfile-uen-201527692R.out 2> bizfile-uen-201527692R.err
 cd ../..
 
-
+################################################## extended endpoint testing, main
 if [ "" = "$1" ]; then
-  echo "*** no live lglconfig.json specified on command line; skipping extended proforma tests";
+  echo "*** skipping extended proforma tests";
 else
   echo " ** performing extended proforma tests; first, displacing $1 into lglconfig.json"
   mkdir -p extended
@@ -254,14 +270,42 @@ else
   echo "*** extended proforma tests: will try to generate PDFs for " `json -ak < proforma-schemalist.out | wc -l` templates
 
   for templateKey in $(json -ak < proforma-schemalist.out); do
-    echo "  * $templateKey"
+    echo " ** $templateKey"
     lgl proforma schemalist $templateKey > schemalist-$templateKey.out
     lgl proforma schemalist $templateKey example > schemalist-$templateKey-example.out
+    lgl proforma validate $templateKey < schemalist-$templateKey-example.out > validate-$templateKey.out 2> validate-$templateKey.err
     lgl proforma generate $templateKey generate-$templateKey.pdf < schemalist-$templateKey-example.out > generate-$templateKey.out 2> generate-$templateKey.err
 
-    if [ ! -s generate-$templateKey.pdf ]; then
+    if egrep -q 'validate.*true' < validate-$templateKey.out; then
+      : # echo "  + validated $templateKey"
+    else
+      echo " !! validate failed for $templateKey"
+      echo "\nvalidate failed for $templateKey using example input" > ../failures-extended-validate-$templateKey.txt
+      cat validate-$templateKey.* >> ../failures-extended-validate-$templateKey.txt
+      echo "to reproduce: lgl proforma validate $templateKey < schemalist-$templateKey-example.out" >> ../failures-extended-validate-$templateKey.txt
+    fi
+
+    if [ ! -s generate-$templateKey.pdf -o $(stat -f "%z" generate-$templateKey.pdf) = 6 ]; then
       echo "outcome unsatisfactory: lgl proforma generate $templateKey generate-$templateKey.pdf < schemalist-$templateKey-example.out" > ../failures-extended-generate-$templateKey.txt
     fi;
+
+    # any deviation from the given template should fail validation.
+    if [ "`json directors < schemalist-$templateKey-example.out 2>/dev/null`" -a \
+         "`json 'directors[0].first_name' < schemalist-$templateKey-example.out`" = "William" ]; then
+     # echo "  - testing deviation from example given"
+      json -e 'this.directors[0].first_name = "Bill"' < schemalist-$templateKey-example.out > schemalist-$templateKey-variation.json
+      lgl proforma validate $templateKey < schemalist-$templateKey-variation.json > validate-$templateKey-variation.out 2> validate-$templateKey-variation.err
+      if grep -q 'need to match the example exactly' validate-$templateKey-variation.out; then
+       : #  echo '  + expected variation validation failure, and got it; considering this a success!'
+      else
+         echo ' !! expected variation validation failure, but did not get expected error message.'
+         (echo ' !! expected variation validation failure, but did not get expected error message.'; \
+          cat validate-$templateKey-variation.*) > ../failures-extended-variation-validate-$templateKey.txt
+      fi
+    else
+      : # echo "  - no deviation available -- we usually just look for a director named William we can rename to Bill"
+    fi
+
   done;
 
   cd ..

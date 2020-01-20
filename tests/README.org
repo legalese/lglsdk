@@ -145,6 +145,7 @@ Finally we get into the test of each service.
 | proforma generate hw3 hw3.docx  | corpsec | < proforma-schemalist-hw3-example.out |
 | bizfile search prive            | corpsec |                                       |
 | bizfile uen 111111111M          | corpsec |                                       |
+| bizfile uen 201527692R          | corpsec |                                       |
 
 JKL Technologies is a fictitious ACRA APImall Sandbox company. Queries about that UEN don't get billed.
 
@@ -243,9 +244,10 @@ cd ../..
 #+NAME: test-prod
 #+BEGIN_SRC sh  :shebang #!/bin/bash :noweb yes :tangle lgltest-prod.sh :eval no
 <<lgltest-setup-common>>
+<<extended_proforma_testing_top>>
 <<basics>>
 <<range-liveness-version(liveness=liveness_production)>>
-<<extended_proforma_testing>>
+<<extended_proforma_testing_main>>
 <<test-diff(liveness=liveness_production)>>
 <<diff-liveness-dirs(liveness=liveness_production)>>
 #+END_SRC
@@ -253,9 +255,10 @@ cd ../..
 #+NAME: test-dev
 #+BEGIN_SRC sh  :shebang #!/bin/bash :noweb yes :tangle lgltest-dev.sh :eval no
 <<lgltest-setup-common>>
+<<extended_proforma_testing_top>>
 <<basics>>
 <<range-liveness-version(liveness=liveness_development)>>
-<<extended_proforma_testing>>
+<<extended_proforma_testing_main>>
 <<test-diff(liveness=liveness_development)>>
 <<diff-liveness-dirs(liveness=liveness_development)>>
 #+END_SRC
@@ -405,11 +408,25 @@ In future, we could do curl-based testing if an independent channel of coverage 
 
 Next we load in an lglconfig.json which was not created by a ~-t init~. Rather, this is an lglconfig.json which you created yourself through a normal ~lgl init~. You then signed up for a paying product plan which gives you access to more templates.
 
-#+NAME: extended_proforma_testing
-#+BEGIN_SRC sh :noweb yes :shebang #!/bin/bash :exports results :results output :tangle extended.sh
+Extended testing only runs if the script is given an argument: an lglconfig.json which has access to more than just the basic templates.
 
+#+NAME: extended_proforma_testing_top
+#+BEGIN_SRC sh :noweb yes :shebang #!/bin/bash
+################################################## extended endpoint testing, top
 if [ "" = "$1" ]; then
-  echo "*** no live lglconfig.json specified on command line; skipping extended proforma tests";
+  echo "*** no live lglconfig.json specified on command line; will skip extended proforma tests";
+else
+  echo " ** will perform extended proforma tests later"
+fi
+
+# back to basics
+#+END_SRC
+
+#+NAME: extended_proforma_testing_main
+#+BEGIN_SRC sh :noweb yes :shebang #!/bin/bash
+################################################## extended endpoint testing, main
+if [ "" = "$1" ]; then
+  echo "*** skipping extended proforma tests";
 else
   echo " ** performing extended proforma tests; first, displacing $1 into lglconfig.json"
   mkdir -p extended
@@ -420,14 +437,42 @@ else
   echo "*** extended proforma tests: will try to generate PDFs for " `json -ak < proforma-schemalist.out | wc -l` templates
 
   for templateKey in $(json -ak < proforma-schemalist.out); do
-    echo "  * $templateKey"
+    echo " ** $templateKey"
     lgl proforma schemalist $templateKey > schemalist-$templateKey.out
     lgl proforma schemalist $templateKey example > schemalist-$templateKey-example.out
+    lgl proforma validate $templateKey < schemalist-$templateKey-example.out > validate-$templateKey.out 2> validate-$templateKey.err
     lgl proforma generate $templateKey generate-$templateKey.pdf < schemalist-$templateKey-example.out > generate-$templateKey.out 2> generate-$templateKey.err
 
-    if [ ! -s generate-$templateKey.pdf ]; then
+    if egrep -q 'validate.*true' < validate-$templateKey.out; then
+      : # echo "  + validated $templateKey"
+    else
+      echo " !! validate failed for $templateKey"
+      echo "\nvalidate failed for $templateKey using example input" > ../failures-extended-validate-$templateKey.txt
+      cat validate-$templateKey.* >> ../failures-extended-validate-$templateKey.txt
+      echo "to reproduce: lgl proforma validate $templateKey < schemalist-$templateKey-example.out" >> ../failures-extended-validate-$templateKey.txt
+    fi
+
+    if [ ! -s generate-$templateKey.pdf -o $(stat -f "%z" generate-$templateKey.pdf) = 6 ]; then
       echo "outcome unsatisfactory: lgl proforma generate $templateKey generate-$templateKey.pdf < schemalist-$templateKey-example.out" > ../failures-extended-generate-$templateKey.txt
     fi;
+
+    # any deviation from the given template should fail validation.
+    if [ "`json directors < schemalist-$templateKey-example.out 2>/dev/null`" -a \
+         "`json 'directors[0].first_name' < schemalist-$templateKey-example.out`" = "William" ]; then
+     # echo "  - testing deviation from example given"
+      json -e 'this.directors[0].first_name = "Bill"' < schemalist-$templateKey-example.out > schemalist-$templateKey-variation.json
+      lgl proforma validate $templateKey < schemalist-$templateKey-variation.json > validate-$templateKey-variation.out 2> validate-$templateKey-variation.err
+      if grep -q 'need to match the example exactly' validate-$templateKey-variation.out; then
+       : #  echo '  + expected variation validation failure, and got it; considering this a success!'
+      else
+         echo ' !! expected variation validation failure, but did not get expected error message.'
+         (echo ' !! expected variation validation failure, but did not get expected error message.'; \
+          cat validate-$templateKey-variation.*) > ../failures-extended-variation-validate-$templateKey.txt
+      fi
+    else
+      : # echo "  - no deviation available -- we usually just look for a director named William we can rename to Bill"
+    fi
+
   done;
 
   cd ..
