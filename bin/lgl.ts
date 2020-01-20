@@ -50,7 +50,8 @@ const cli_help_commands = {
     validate   key   STDIN should be JSON data; will validate against the server.
                    $ lgl -t proforma validate hw3 < example.json
     generate   key   see: lgl help proforma generate
-                   $ lgl -t proforma generate hw3 < example.json | json docPdf | base64 -D > example.pdf
+                   $ lgl -t proforma generate hw3 hw3.pdf < example.json
+    demo       key   shorthand for: schemalist key example | generate key
 `,
     corpsec: `subcommands for lgl corpsec:
     search companyname

@@ -69,7 +69,7 @@ var rp = require("request-promise");
 // it depends
 var cli_help = "usage: lgl [help] command subcommand ...\ncommands:\n    help [command]          view more details about command\n    init                    initialize account\n    demo                    walks you through key functionality\n    bizfile / corpsec       retrieves company details from government backends\n    proforma                creates paperwork from templates, filled with JSON parameters\n\n    login                   reinitialize account if lglconfig.json has gone missing\n    config                  manipulate lglconfig.json. Or you could just edit it yourself.\n\noptions:\n    --test                  all commands will run in test mode against the dev sandbox\n    --verbose               verbose logging\n    --world=some.json       load environment context from some.json file\n    --config=conf.json      load configuration from conf.json instead of default ./lglconfig.json\n\nenvironment variables:\n    LGL_VERBOSE   set to truthy to get more verbosity\n";
 var cli_help_commands = {
-    proforma: "subcommands for lgl proforma:\n    schemalist       show detailed example for a specific template, in json.\n                   $ lgl proforma schemalist hw3 > hw3.json\n    schemalist key   extract the \"example\" property for subsequent use:\n                   $ lgl proforma schemalist hw3 example > example.json\n    schema     key   show the JSON schema for the expected input\n                   $ lgl proforma schema hw3\n    validate   key   STDIN should be JSON data; will validate against the server.\n                   $ lgl -t proforma validate hw3 < example.json\n    generate   key   see: lgl help proforma generate\n                   $ lgl -t proforma generate hw3 < example.json | json docPdf | base64 -D > example.pdf\n",
+    proforma: "subcommands for lgl proforma:\n    schemalist       show detailed example for a specific template, in json.\n                   $ lgl proforma schemalist hw3 > hw3.json\n    schemalist key   extract the \"example\" property for subsequent use:\n                   $ lgl proforma schemalist hw3 example > example.json\n    schema     key   show the JSON schema for the expected input\n                   $ lgl proforma schema hw3\n    validate   key   STDIN should be JSON data; will validate against the server.\n                   $ lgl -t proforma validate hw3 < example.json\n    generate   key   see: lgl help proforma generate\n                   $ lgl -t proforma generate hw3 hw3.pdf < example.json\n    demo       key   shorthand for: schemalist key example | generate key\n",
     corpsec: "subcommands for lgl corpsec:\n    search companyname\n    get    UEN\n",
     demo: "subcommands for lgl demo:\n    demo all\n    demo corpsec\n    demo proforma\n",
     init: "lgl init <email>\n    Sets up an account at the Legalese backend using <email>.\n    The backend returns credentials including API keys; they\n    get saved into ./lglconfig.json. This command will prompt\n    you for a password. If you ever lose your lglconfig.json,\n    you will need this password to regenerate it.\n\n    If you just want to try without creating an account,\n    run   lgl init --test\n    to set up a test account with limited functionality.\n",
@@ -437,7 +437,8 @@ function run_corpsec() {
 }
 function run_proforma() {
     return __awaiter(this, void 0, void 0, function () {
-        var _a, _b, _c, _d, _e, _f, apiRequest, body, profile_09, e_5, e_6, e_7, output_filename, mybody, e_8;
+        var apiRequest, body, profile_09, e_5, e_6, e_7, output_filename, mybody, e_8;
+        var _a, _b, _c, _d, _e, _f;
         return __generator(this, function (_g) {
             switch (_g.label) {
                 case 0:
