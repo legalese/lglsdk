@@ -32,6 +32,7 @@ commands:
 options:
     --test                  all commands will run in test mode against the dev sandbox
     --verbose               verbose logging
+    --vv                    extra verbose logging
     --world=some.json       load environment context from some.json file
     --config=conf.json      load configuration from conf.json instead of default ./lglconfig.json
 
@@ -145,9 +146,10 @@ let templateKey = (argv.version && argv.version == "0.9") ? "filepath" : "templa
 
 console_error(`templateKey = ${templateKey}`,2)
 function console_error(str: string, verbosity=1) {
-    if ((verbosity == 2 && argv.vv)
-        ||
-        (verbosity == 1 && LGL_VERBOSE)) {
+  if (verbosity == 2 && argv.vv) {
+        console.error(JSON.stringify(str,null,2))
+    }
+    else if (verbosity >= 1 && LGL_VERBOSE) {
         console.error(str)
     }
 }
@@ -642,7 +644,7 @@ function writeToFile(parsed: string, filename: string, filetype = 'pdf') {
 }
 
 function showRP (query: any) : any {
-  console_error(query);
+  console_error(query,2);
   return query;
 }
 

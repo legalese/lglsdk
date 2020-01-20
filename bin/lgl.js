@@ -67,7 +67,7 @@ var rp = require("request-promise");
 // subcommand: string
 // $ lgl query "are vehicles allowed in the park?"
 // it depends
-var cli_help = "usage: lgl [help] command subcommand ...\ncommands:\n    help [command]          view more details about command\n    init                    initialize account\n    demo                    walks you through key functionality\n    bizfile / corpsec       retrieves company details from government backends\n    proforma                creates paperwork from templates, filled with JSON parameters\n\n    login                   reinitialize account if lglconfig.json has gone missing\n    config                  manipulate lglconfig.json. Or you could just edit it yourself.\n\noptions:\n    --test                  all commands will run in test mode against the dev sandbox\n    --verbose               verbose logging\n    --world=some.json       load environment context from some.json file\n    --config=conf.json      load configuration from conf.json instead of default ./lglconfig.json\n\nenvironment variables:\n    LGL_VERBOSE   set to truthy to get more verbosity\n";
+var cli_help = "usage: lgl [help] command subcommand ...\ncommands:\n    help [command]          view more details about command\n    init                    initialize account\n    demo                    walks you through key functionality\n    bizfile / corpsec       retrieves company details from government backends\n    proforma                creates paperwork from templates, filled with JSON parameters\n\n    login                   reinitialize account if lglconfig.json has gone missing\n    config                  manipulate lglconfig.json. Or you could just edit it yourself.\n\noptions:\n    --test                  all commands will run in test mode against the dev sandbox\n    --verbose               verbose logging\n    --vv                    extra verbose logging\n    --world=some.json       load environment context from some.json file\n    --config=conf.json      load configuration from conf.json instead of default ./lglconfig.json\n\nenvironment variables:\n    LGL_VERBOSE   set to truthy to get more verbosity\n";
 var cli_help_commands = {
     proforma: "subcommands for lgl proforma:\n    schemalist       show detailed example for a specific template, in json.\n                   $ lgl proforma schemalist hw3 > hw3.json\n    schemalist key   extract the \"example\" property for subsequent use:\n                   $ lgl proforma schemalist hw3 example > example.json\n    schema     key   show the JSON schema for the expected input\n                   $ lgl proforma schema hw3\n    validate   key   STDIN should be JSON data; will validate against the server.\n                   $ lgl -t proforma validate hw3 < example.json\n    generate   key   see: lgl help proforma generate\n                   $ lgl -t proforma generate hw3 < example.json | json docPdf | base64 -D > example.pdf\n",
     corpsec: "subcommands for lgl corpsec:\n    search companyname\n    get    UEN\n",
@@ -114,9 +114,10 @@ var templateKey = (argv.version && argv.version == "0.9") ? "filepath" : "templa
 console_error("templateKey = " + templateKey, 2);
 function console_error(str, verbosity) {
     if (verbosity === void 0) { verbosity = 1; }
-    if ((verbosity == 2 && argv.vv)
-        ||
-            (verbosity == 1 && LGL_VERBOSE)) {
+    if (verbosity == 2 && argv.vv) {
+        console.error(JSON.stringify(str, null, 2));
+    }
+    else if (verbosity >= 1 && LGL_VERBOSE) {
         console.error(str);
     }
 }
@@ -699,6 +700,6 @@ function writeToFile(parsed, filename, filetype) {
     }
 }
 function showRP(query) {
-    console_error(query);
+    console_error(query, 2);
     return query;
 }
