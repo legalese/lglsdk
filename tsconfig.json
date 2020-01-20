@@ -62,6 +62,11 @@
 
 },
   "include": [
-  "**/*.ts"
-  ]
+  "bin/*.ts",
+  "lib/*.ts"
+  ],
+    "exclude": [
+            "node_modules"
+            ],
+"compileOnSave": true
 }
