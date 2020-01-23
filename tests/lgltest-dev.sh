@@ -100,9 +100,9 @@ else
       : # echo "  + validated $templateKey"
     else
       echo " !! validate failed for $templateKey"
-      echo "\nvalidate failed for $templateKey using example input" > ../failures-extended-validate-$templateKey.txt
+      (echo ""; echo "validate failed for $templateKey using example input") > ../failures-extended-validate-$templateKey.txt
       cat validate-$templateKey.* >> ../failures-extended-validate-$templateKey.txt
-      echo "to reproduce: lgl proforma validate $templateKey < schemalist-$templateKey-example.out" >> ../failures-extended-validate-$templateKey.txt
+      ( echo "to reproduce:"; echo "  cd" `pwd`; echo "  lgl proforma validate $templateKey < schemalist-$templateKey-example.out" ) >> ../failures-extended-validate-$templateKey.txt
     fi
 
     if [ ! -s generate-$templateKey.pdf -o $(stat -f "%z" generate-$templateKey.pdf) = 6 ]; then
@@ -123,7 +123,7 @@ else
           cat validate-$templateKey-variation.*) > ../failures-extended-variation-validate-$templateKey.txt
       fi
     else
-      : # echo "  - no deviation available -- we usually just look for a director named William we can rename to Bill"
+      echo "  - no deviation available -- we usually just look for a director named William we can rename to Bill"
     fi
 
   done;
