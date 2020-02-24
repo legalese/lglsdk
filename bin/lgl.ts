@@ -55,7 +55,7 @@ const cli_help_commands = {
 `,
     corpsec: `subcommands for lgl corpsec:
     search companyname
-    get    UEN
+    uen    UEN
 `,
     demo: `subcommands for lgl demo:
     demo all
@@ -407,7 +407,7 @@ async function run_corpsec() {
 
         } catch (e) { console.error(`lgl: error while calling API /bizfile`); console.error(e); process.exit(1); }
     }
-    else if (arg_subcommand == 'uen') {
+    else if (arg_subcommand == 'uen' || arg_subcommand == 'get') {
         const searchString = argv._.slice(4, argv.length).join(' ')
         try {
           apiRequest = await rp(showRP({
