@@ -541,7 +541,6 @@ async function run_proforma() {
                         contenttype: PROFORMA_FILETYPE,
                         data: JSON.parse(fs.readFileSync(0, 'utf-8'))
                     })
-        console_error(`lgl: mybody = `)
         console_error(JSON.stringify(mybody,null,2))
         apiRequest = await rp(showRP({
                 method: 'POST', uri: URI_BASE + "/generate",

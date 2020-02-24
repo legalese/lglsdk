@@ -12,10 +12,11 @@ var __assign = (this && this.__assign) || function () {
     return __assign.apply(this, arguments);
 };
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
         function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
@@ -438,7 +439,8 @@ function run_corpsec() {
 }
 function run_proforma() {
     return __awaiter(this, void 0, void 0, function () {
-        var _a, _b, _c, _d, _e, _f, apiRequest, body, profile_09, e_5, e_6, e_7, output_filename, mybody, e_8;
+        var apiRequest, body, profile_09, e_5, e_6, e_7, output_filename, mybody, e_8;
+        var _a, _b, _c, _d, _e, _f;
         return __generator(this, function (_g) {
             switch (_g.label) {
                 case 0:
@@ -499,7 +501,7 @@ function run_proforma() {
                     _g.trys.push([6, 8, , 9]);
                     return [4 /*yield*/, rp(showRP({
                             method: 'POST', uri: URI_BASE + "/schema",
-                            body: argv.version == "0.9" ? (_a = { profile: profile_09 }, _a[templateKey] = arg_subsubcommand, _a) : __assign({}, body, (_b = {}, _b[templateKey] = arg_subsubcommand, _b)),
+                            body: argv.version == "0.9" ? (_a = { profile: profile_09 }, _a[templateKey] = arg_subsubcommand, _a) : __assign(__assign({}, body), (_b = {}, _b[templateKey] = arg_subsubcommand, _b)),
                             json: true
                         }))];
                 case 7:
@@ -525,7 +527,7 @@ function run_proforma() {
                     return [4 /*yield*/, rp(showRP({
                             method: 'POST', uri: URI_BASE + "/validate",
                             body: (argv.version == "0.9"
-                                ? (_c = { profile: profile_09 }, _c[templateKey] = arg_subsubcommand, _c.data = JSON.parse(fs.readFileSync(0, 'utf-8')), _c) : __assign({}, body, (_d = {}, _d[templateKey] = arg_subsubcommand, _d.data = JSON.parse(fs.readFileSync(0, 'utf-8')), _d))),
+                                ? (_c = { profile: profile_09 }, _c[templateKey] = arg_subsubcommand, _c.data = JSON.parse(fs.readFileSync(0, 'utf-8')), _c) : __assign(__assign({}, body), (_d = {}, _d[templateKey] = arg_subsubcommand, _d.data = JSON.parse(fs.readFileSync(0, 'utf-8')), _d))),
                             json: true
                         }))];
                 case 12:
@@ -578,8 +580,7 @@ function run_proforma() {
                 case 16:
                     _g.trys.push([16, 18, , 19]);
                     mybody = (argv.version == "0.9"
-                        ? __assign((_e = { profile: profile_09 }, _e[templateKey] = arg_subsubcommand, _e.contenttype = PROFORMA_FILETYPE, _e), (JSON.parse(fs.readFileSync(0, 'utf-8')))) : __assign({}, body, (_f = {}, _f[templateKey] = arg_subsubcommand, _f.contenttype = PROFORMA_FILETYPE, _f.data = JSON.parse(fs.readFileSync(0, 'utf-8')), _f)));
-                    console_error("lgl: mybody = ");
+                        ? __assign((_e = { profile: profile_09 }, _e[templateKey] = arg_subsubcommand, _e.contenttype = PROFORMA_FILETYPE, _e), (JSON.parse(fs.readFileSync(0, 'utf-8')))) : __assign(__assign({}, body), (_f = {}, _f[templateKey] = arg_subsubcommand, _f.contenttype = PROFORMA_FILETYPE, _f.data = JSON.parse(fs.readFileSync(0, 'utf-8')), _f)));
                     console_error(JSON.stringify(mybody, null, 2));
                     return [4 /*yield*/, rp(showRP({
                             method: 'POST', uri: URI_BASE + "/generate",
