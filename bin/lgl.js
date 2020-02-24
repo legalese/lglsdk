@@ -450,7 +450,7 @@ function run_proforma() {
                     };
                     if (config.auth0_prefix) {
                         body['auth0_prefix'] = config.auth0_prefix;
-                        console_error("sending auth0_prefix " + config.auth0_prefix, 2);
+                        // console_error(`sending auth0_prefix ${config.auth0_prefix}`, 2)
                     }
                     profile_09 = {
                         email: config.email,
