@@ -112,13 +112,21 @@ if (/(v0.9|v1.0)$/.test(URI_BASE) && argv.version == undefined) {
     argv.version = '0.9';
 }
 var templateKey = (argv.version && argv.version == "0.9") ? "filepath" : "templateKey";
+// calls to console_error take a verbosity argument.
+//   | lgl called with | console_error called with | console_error displays? |
+//   | --------------- | ------------------------- | ----------------------- |
+//   |                 |         (..., anything)   |  no                     |
+//   |       -v        |         (..., 1)          |     yes, JSON tersely   |
+//   |       -v        |         (...,   2)        |  no                     |
+//   |      --vv       |         (..., 1)          |     yes, JSON verbosely |
+//   |      --vv       |         (...,   2)        |     yes, JSON verbosely |
 console_error("templateKey = " + templateKey, 2);
 function console_error(str, verbosity) {
     if (verbosity === void 0) { verbosity = 1; }
-    if (verbosity == 2 && argv.vv) {
+    if (argv.vv) {
         console.error(JSON.stringify(str, null, 2));
     }
-    else if (verbosity >= 1 && LGL_VERBOSE) {
+    else if (verbosity == 1 && LGL_VERBOSE) {
         console.error(str);
     }
 }
@@ -701,6 +709,6 @@ function writeToFile(parsed, filename, filetype) {
     }
 }
 function showRP(query) {
-    console_error(query, 2);
+    console_error(query, 1);
     return query;
 }
