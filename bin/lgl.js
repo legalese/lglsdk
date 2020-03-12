@@ -68,7 +68,7 @@ var rp = require("request-promise");
 // subcommand: string
 // $ lgl query "are vehicles allowed in the park?"
 // it depends
-var cli_help = "usage: lgl [help] command subcommand ...\ncommands:\n    help [command]          view more details about command\n    init                    initialize account\n    demo                    walks you through key functionality\n    bizfile / corpsec       retrieves company details from government backends\n    proforma                creates paperwork from templates, filled with JSON parameters\n\n    login                   reinitialize account if lglconfig.json has gone missing\n    config                  manipulate lglconfig.json. Or you could just edit it yourself.\n\noptions:\n    --test                  all commands will run in test mode against the dev sandbox\n    --verbose               verbose logging\n    --vv                    extra verbose logging\n    --world=some.json       load environment context from some.json file\n    --config=conf.json      load configuration from conf.json instead of default ./lglconfig.json\n\nenvironment variables:\n    LGL_VERBOSE   set to truthy to get more verbosity\n";
+var cli_help = "usage: lgl [help] command subcommand ...\ncommands:\n    help [command]          view more details about command\n    init                    initialize account\n    login                   reinitialize account if lglconfig.json has gone missing\n    demo                    walks you through key functionality\n    config                  manipulate lglconfig.json. Or you could just edit it yourself.\n    setup                   choose a subscription / service / payment plan. Opens a browser.\n                            Some features are only available to paid users.\n    bizfile / corpsec       retrieves company details from government backends\n    proforma                creates paperwork from templates, filled with JSON parameters\n\noptions:\n    --test                  all commands will run in test mode against the dev sandbox\n    --verbose               verbose logging\n    --vv                    extra verbose logging\n    --world=some.json       load environment context from some.json file\n    --config=conf.json      load configuration from conf.json instead of default ./lglconfig.json\n\nenvironment variables:\n    LGL_VERBOSE   set to truthy to get more verbosity\n";
 var cli_help_commands = {
     proforma: "subcommands for lgl proforma:\n    schemalist       show detailed example for a specific template, in json.\n                   $ lgl proforma schemalist hw3 > hw3.json\n    schemalist key   extract the \"example\" property for subsequent use:\n                   $ lgl proforma schemalist hw3 example > example.json\n    schema     key   show the JSON schema for the expected input\n                   $ lgl proforma schema hw3\n    validate   key   STDIN should be JSON data; will validate against the server.\n                   $ lgl -t proforma validate hw3 < example.json\n    generate   key   see: lgl help proforma generate\n                   $ lgl -t proforma generate hw3 < example.json | json docPdf | base64 -D > example.pdf\n",
     corpsec: "subcommands for lgl corpsec:\n    search companyname\n    uen    UEN\n",
@@ -178,6 +178,9 @@ else if (arg_command == "login") { // reinitialize
 }
 else if (arg_command == "config") {
     run_config();
+}
+else if (arg_command == "setup") {
+    run_setup();
 }
 else if (arg_command == "demo") {
     run_demo();
@@ -327,7 +330,7 @@ function run_init(init_or_login) {
                         "v01_live_api_key": _.keys(api_response.app_metadata.v01_live_api_keys)[0],
                         "v01_test_api_key": _.keys(api_response.app_metadata.v01_test_api_keys)[0],
                     }, null, 2) + "\n");
-                    console.log("You have created a Legalese account!\nTo proceed, please confirm your email address.\nYou should see a verification request in your Inbox.");
+                    console.log("You have created a Legalese account!\nTo proceed, please confirm your email address.\nYou should see a verification request in your Inbox.\n\nAfter verification, you can subscribe to a plan by running   lglsdk setup\n");
                     if (!/legalese\.com|gmail\.com/i.test(arg_subcommand)) return [3 /*break*/, 14];
                     // if we wanted to be really creepy
                     // we could look up the MX records for the domain
@@ -373,6 +376,17 @@ function run_config() {
     else {
         console.log(JSON.stringify(config, null, 2));
     }
+}
+///////////////////////////////////////////////////////////////////////////// setup
+function run_setup() {
+    // set up some kind of magic credential that we can pass in the GET URL to pre-authenticate the user so they don't need to re-login?
+    // open a customized URL in a web browser
+    // mac os: call "open"
+    // windows: ???
+    // unix: ???
+    var api_key = LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key;
+    var setup_url = URI_BASE + "/lglsdk/choose-a-plan?user_id=" + config.user_id + "&email=" + config.email + "&api_key=" + api_key;
+    console.log("please click on:\n    " + setup_url + "\n");
 }
 ///////////////////////////////////////////////////////////////////////////// demo
 function run_demo() {

@@ -22,12 +22,13 @@ const cli_help = `usage: lgl [help] command subcommand ...
 commands:
     help [command]          view more details about command
     init                    initialize account
+    login                   reinitialize account if lglconfig.json has gone missing
     demo                    walks you through key functionality
+    config                  manipulate lglconfig.json. Or you could just edit it yourself.
+    setup                   choose a subscription / service / payment plan. Opens a browser.
+                            Some features are only available to paid users.
     bizfile / corpsec       retrieves company details from government backends
     proforma                creates paperwork from templates, filled with JSON parameters
-
-    login                   reinitialize account if lglconfig.json has gone missing
-    config                  manipulate lglconfig.json. Or you could just edit it yourself.
 
 options:
     --test                  all commands will run in test mode against the dev sandbox
@@ -219,6 +220,9 @@ else if (arg_command == "login") { // reinitialize
 else if (arg_command == "config") {
     run_config()
 }
+else if (arg_command == "setup") {
+    run_setup()
+}
 else if (arg_command == "demo") {
     run_demo()
 }
@@ -347,13 +351,20 @@ When you are ready to use the system for real,
 
     console.log(`You have created a Legalese account!
 To proceed, please confirm your email address.
-You should see a verification request in your Inbox.`)
+You should see a verification request in your Inbox.
+
+After verification, you can subscribe to a plan by running   lglsdk setup
+`)
     if (/legalese\.com|gmail\.com/i.test(arg_subcommand)) {
         // if we wanted to be really creepy
         // we could look up the MX records for the domain
         // to determine if it's hosted at Outlook, Yahoo, Gmail, or whatever
         await open("https://www.gmail.com/")
     }
+
+  // after this, we should kick them over to a choose-your-plan page, in a web browser.
+  // let's give them a "setup" command
+  
 }
 
 ///////////////////////////////////////////////////////////////////////////// config
@@ -388,6 +399,25 @@ function run_config() {
     } else {
         console.log(JSON.stringify(config, null, 2));
     }
+}
+
+///////////////////////////////////////////////////////////////////////////// setup
+
+function run_setup() {
+  // set up some kind of magic credential that we can pass in the GET URL to pre-authenticate the user so they don't need to re-login?
+  // open a customized URL in a web browser
+  // mac os: call "open"
+  // windows: ???
+  // unix: ???
+
+  let api_key = LGL_TEST ? config.v01_test_api_key : config.v01_live_api_key
+  
+  let setup_url = `${URI_BASE}/choose-a-plan?user_id=${config.user_id}&email=${config.email}&api_key=${api_key}`
+
+  console.log(`please click on:
+    ${setup_url}
+`)
+  
 }
 
 ///////////////////////////////////////////////////////////////////////////// demo
